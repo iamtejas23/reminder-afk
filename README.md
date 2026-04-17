@@ -1,50 +1,68 @@
-# Welcome to your Expo app 👋
+# reminder-afk
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+`reminder-afk` is an Expo React Native app for running AFK break timers with:
 
-## Get started
+- A default 30 minute timer with custom durations from 5 to 120 minutes
+- Preset buttons for 15, 25, 30, and 45 minutes
+- Start, pause, reset, large countdown, progress bar, and live status copy
+- Smart reminders at about 82.5%, 95%, and 100%
+- Local notifications for background-safe reminders
+- Expo Speech voice prompts with a slightly slower, lower-pitch robotic feel
+- AsyncStorage persistence for the last duration, reminder settings, and completed session count
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Install
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Run
 
-## Learn more
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Useful shortcuts:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- `a` opens Android
+- `i` opens iOS
+- `w` opens web
 
-## Join the community
+## Recommended testing flow
 
-Join our community of developers creating universal apps.
+1. Open the app on a physical Android or iPhone device when possible.
+2. Tap `Start` and allow notification permission when prompted.
+3. Minimize the app to confirm the scheduled reminders still arrive in the background.
+4. Reopen the app and verify the countdown restores correctly.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Notes
+
+- The app uses `expo-notifications` local notifications, so background reminders do not require a server.
+- Expo documents that local notifications remain available in Expo Go, while Android push notifications require a development build.
+- On iOS, Expo Speech will not produce audio if the device is in silent mode.
+- The speech messages are exactly:
+  - `Hey, your break is almost over`
+  - `One minute left. Get ready`
+  - `AFK complete. Back to work!`
+
+## Project structure
+
+```text
+app/
+  _layout.tsx
+  index.tsx
+components/afk/
+  preset-button.tsx
+  progress-bar.tsx
+  setting-switch.tsx
+constants/
+  afk.ts
+hooks/
+  use-afk-timer.ts
+lib/
+  afk-notifications.ts
+  afk-speech.ts
+  afk-storage.ts
+types/
+  afk.ts
+```
