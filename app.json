@@ -28,7 +28,16 @@
     },
     "plugins": [
       "expo-router",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "sounds": [
+            "./assets/sounds/afk_almost.wav",
+            "./assets/sounds/afk_final.wav",
+            "./assets/sounds/afk_complete.wav"
+          ]
+        }
+      ],
       [
         "expo-splash-screen",
         {

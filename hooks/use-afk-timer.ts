@@ -16,6 +16,7 @@ import {
   getReminderNotificationData,
   requestAfkNotificationPermissionsAsync,
   scheduleReminderNotifications,
+  scheduleTestReminderNotification,
 } from '@/lib/afk-notifications';
 import { speakReminder, stopReminderSpeech } from '@/lib/afk-speech';
 import {
@@ -149,6 +150,68 @@ export function useAfkTimer() {
   const nextReminder = REMINDER_STAGES.find(
     (stage) => stage.progress < 1 && totalDurationMs * stage.progress > elapsedMs
   );
+
+  async function syncBackgroundReminderNotifications(mode: 'active' | 'background') {
+    const currentState = stateRef.current;
+
+    if (
+      currentState.status !== 'running' ||
+      currentState.sessionId === null ||
+      currentState.permissionState !== 'granted'
+    ) {
+      return;
+    }
+
+    const syncNow = Date.now();
+    const elapsedBeforeSync = calculateElapsedMs(
+      currentState.status,
+      currentState.elapsedBeforePauseMs,
+      currentState.startedAt,
+      syncNow,
+      currentState.durationMinutes
+    );
+
+    await cancelReminderNotifications(currentState.scheduledNotificationIds);
+
+    if (mode === 'active') {
+      setNowMs(syncNow);
+      setState((latestState) => {
+        if (latestState.status !== 'running' || latestState.sessionId !== currentState.sessionId) {
+          return latestState;
+        }
+
+        return {
+          ...latestState,
+          scheduledNotificationIds: [],
+        };
+      });
+      return;
+    }
+
+    const nextNotificationIds = await scheduleReminderNotifications({
+      durationMinutes: currentState.durationMinutes,
+      elapsedMs: elapsedBeforeSync,
+      sessionId: currentState.sessionId,
+      vibrationEnabled: currentState.vibrationEnabled,
+      voiceEnabled: currentState.voiceEnabled,
+    });
+
+    setNowMs(syncNow);
+    setState((latestState) => {
+      if (
+        latestState.status !== 'running' ||
+        latestState.sessionId !== currentState.sessionId ||
+        appStateRef.current === 'active'
+      ) {
+        return latestState;
+      }
+
+      return {
+        ...latestState,
+        scheduledNotificationIds: nextNotificationIds,
+      };
+    });
+  }
 
   completeSessionRef.current = async () => {
     triggeredReminderStageKeysRef.current = getTriggeredReminderStageKeys(
@@ -316,15 +379,21 @@ export function useAfkTimer() {
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
+      const previousAppState = appStateRef.current;
       appStateRef.current = nextAppState;
+      const wasActive = previousAppState === 'active';
 
       if (nextAppState !== 'active') {
+        if (wasActive) {
+          void syncBackgroundReminderNotifications('background');
+        }
         return;
       }
 
       const currentState = stateRef.current;
       const now = Date.now();
       setNowMs(now);
+      void syncBackgroundReminderNotifications('active');
 
       if (
         currentState.status === 'running' &&
@@ -344,6 +413,19 @@ export function useAfkTimer() {
       subscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      !state.isReady ||
+      state.status !== 'running' ||
+      state.scheduledNotificationIds.length === 0 ||
+      appStateRef.current !== 'active'
+    ) {
+      return;
+    }
+
+    void syncBackgroundReminderNotifications('active');
+  }, [state.isReady, state.scheduledNotificationIds.length, state.status]);
 
   useEffect(() => {
     if (state.status !== 'running' || state.sessionId === null || appStateRef.current !== 'active') {
@@ -452,8 +534,34 @@ export function useAfkTimer() {
       await stopReminderSpeech();
     }
 
+    let nextNotificationIds = state.scheduledNotificationIds;
+
+    if (
+      appStateRef.current !== 'active' &&
+      state.status === 'running' &&
+      state.sessionId &&
+      state.permissionState === 'granted'
+    ) {
+      await cancelReminderNotifications(state.scheduledNotificationIds);
+      nextNotificationIds = await scheduleReminderNotifications({
+        durationMinutes: state.durationMinutes,
+        elapsedMs: calculateElapsedMs(
+          state.status,
+          state.elapsedBeforePauseMs,
+          state.startedAt,
+          Date.now(),
+          state.durationMinutes
+        ),
+        sessionId: state.sessionId,
+        vibrationEnabled: state.vibrationEnabled,
+        voiceEnabled: nextValue,
+      });
+    }
+
     setState((currentState) => ({
       ...currentState,
+      scheduledNotificationIds:
+        currentState.status === 'running' ? nextNotificationIds : currentState.scheduledNotificationIds,
       voiceEnabled: nextValue,
     }));
   }
@@ -469,13 +577,19 @@ export function useAfkTimer() {
     );
     let nextNotificationIds = state.scheduledNotificationIds;
 
-    if (state.status === 'running' && state.sessionId && state.permissionState === 'granted') {
+    if (
+      appStateRef.current !== 'active' &&
+      state.status === 'running' &&
+      state.sessionId &&
+      state.permissionState === 'granted'
+    ) {
       await cancelReminderNotifications(state.scheduledNotificationIds);
       nextNotificationIds = await scheduleReminderNotifications({
         durationMinutes: state.durationMinutes,
         elapsedMs: elapsedBeforeChange,
         sessionId: state.sessionId,
         vibrationEnabled: nextValue,
+        voiceEnabled: state.voiceEnabled,
       });
     }
 
@@ -503,12 +617,13 @@ export function useAfkTimer() {
     try {
       permissionState = await requestAfkNotificationPermissionsAsync();
 
-      if (permissionState === 'granted' && nextSessionId) {
+      if (permissionState === 'granted' && nextSessionId && appStateRef.current !== 'active') {
         scheduledNotificationIds = await scheduleReminderNotifications({
           durationMinutes: state.durationMinutes,
           elapsedMs: elapsedBeforeStart,
           sessionId: nextSessionId,
           vibrationEnabled: state.vibrationEnabled,
+          voiceEnabled: state.voiceEnabled,
         });
       }
     } catch {
@@ -525,7 +640,7 @@ export function useAfkTimer() {
       elapsedBeforePauseMs: elapsedBeforeStart,
       errorMessage:
         permissionState === 'denied'
-          ? 'Notifications are off, so background reminders will stay silent until permission is granted. Voice prompts still work while the app stays open.'
+          ? 'Notifications are off, so screen-off and background voice reminders will stay silent until permission is granted. In-app voice still works while the app stays open.'
           : null,
       permissionState,
       scheduledNotificationIds,
@@ -592,6 +707,44 @@ export function useAfkTimer() {
     }));
   }
 
+  async function testVoice() {
+    let nextPermissionState = state.permissionState;
+    let nextErrorMessage: string | null = null;
+
+    try {
+      if (Platform.OS !== 'web') {
+        nextPermissionState = await requestAfkNotificationPermissionsAsync();
+      }
+
+      if (nextPermissionState === 'granted' && Platform.OS !== 'web') {
+        const notificationId = await scheduleTestReminderNotification({
+          vibrationEnabled: state.vibrationEnabled,
+        });
+
+        if (notificationId) {
+          setTimeout(() => {
+            void Notifications.dismissNotificationAsync(notificationId).catch(() => undefined);
+          }, 4_500);
+        }
+      } else {
+        await speakReminder(REMINDER_STAGES[0].message);
+        if (nextPermissionState === 'denied') {
+          nextErrorMessage =
+            'Voice test used in-app speech because notification access is off. Turn notifications on for screen-off spoken reminders.';
+        }
+      }
+    } catch {
+      nextErrorMessage =
+        'Voice test could not play. Check notification permission, battery settings, and device sound volume, then try again.';
+    }
+
+    setState((currentState) => ({
+      ...currentState,
+      errorMessage: nextErrorMessage,
+      permissionState: nextPermissionState,
+    }));
+  }
+
   let statusMessage = 'Pick a duration, then let the app mind the clock for you.';
   if (state.status === 'running') {
     statusMessage = nextReminder
@@ -621,7 +774,7 @@ export function useAfkTimer() {
           : 'Queued on start',
     permissionMessage:
       state.permissionState === 'denied'
-        ? 'Local notification permission is off. Voice prompts still work while the app stays open, but background reminders need notification access.'
+        ? 'Local notification permission is off. The timer can still speak while the app is open, but screen-off and background spoken reminders need notification access.'
         : state.permissionState === 'unsupported'
           ? 'This platform does not support the mobile notification flow used by the AFK timer.'
           : state.errorMessage,
@@ -635,6 +788,7 @@ export function useAfkTimer() {
     reset,
     setDurationMinutes,
     nudgeDuration,
+    testVoice,
     setVoiceEnabled,
     setVibrationEnabled,
     status: state.status,

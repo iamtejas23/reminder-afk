@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import {
@@ -26,26 +27,51 @@ const STATUS_ACCENTS = {
   complete: '#E46E42',
 } as const;
 
+const OPENING_SCREEN_MS = 1600;
+const openingLogo = require('../assets/images/splash-icon.png');
+
 export default function HomeScreen() {
   const timer = useAfkTimer();
   const [draftDuration, setDraftDuration] = useState(() => String(timer.durationMinutes));
+  const [openingDelayComplete, setOpeningDelayComplete] = useState(false);
 
   useEffect(() => {
     setDraftDuration(String(timer.durationMinutes));
   }, [timer.durationMinutes]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setOpeningDelayComplete(true);
+    }, OPENING_SCREEN_MS);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, []);
 
   function commitDuration() {
     const parsedValue = Number.parseInt(draftDuration, 10);
     timer.setDurationMinutes(Number.isNaN(parsedValue) ? timer.durationMinutes : parsedValue);
   }
 
-  if (!timer.isReady) {
+  if (!timer.isReady || !openingDelayComplete) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="light" />
-        <View style={styles.loadingWrap}>
-          <Text style={styles.loadingEyebrow}>reminder-afk</Text>
-          <Text style={styles.loadingTitle}>Restoring your last AFK session...</Text>
+        <View style={styles.openingScreen}>
+          <View style={styles.orbLarge} />
+          <View style={styles.orbSmall} />
+
+          <View style={styles.openingContent}>
+            <Image contentFit="contain" source={openingLogo} style={styles.openingLogo} />
+            <Text style={styles.openingEyebrow}>reminder-afk</Text>
+            <Text style={styles.openingTitle}>Pause well. Return sharp.</Text>
+            <Text style={styles.openingSubtitle}>
+              {timer.isReady ? 'Loading your AFK desk companion...' : 'Preparing your AFK timer...'}
+            </Text>
+          </View>
+
+          <Text style={styles.openingCredit}>{'build by "Tejas Mane"'}</Text>
         </View>
       </SafeAreaView>
     );
@@ -177,7 +203,7 @@ export default function HomeScreen() {
             <Text style={styles.sectionTitle}>Control how the app nudges you back.</Text>
 
             <SettingSwitch
-              description="Uses Expo Speech with a slightly slower, lower-pitch voice while the app is open."
+              description="Uses Expo Speech while the app is open, then spoken notification audio when the app is in the background or the screen is off."
               label="Voice prompts"
               value={timer.voiceEnabled}
               onValueChange={timer.setVoiceEnabled}
@@ -188,6 +214,23 @@ export default function HomeScreen() {
               value={timer.vibrationEnabled}
               onValueChange={timer.setVibrationEnabled}
             />
+
+            <View style={styles.testVoiceRow}>
+              <View style={styles.testVoiceCopy}>
+                <Text style={styles.testVoiceLabel}>Test voice now</Text>
+                <Text style={styles.testVoiceHint}>
+                  Plays the first spoken reminder right away so you can verify the sound without
+                  waiting for the timer.
+                </Text>
+              </View>
+
+              <Pressable
+                accessibilityRole="button"
+                onPress={timer.testVoice}
+                style={styles.testVoiceButton}>
+                <Text style={styles.testVoiceButtonText}>Test Voice</Text>
+              </Pressable>
+            </View>
 
             {timer.permissionMessage ? (
               <View style={styles.permissionNote}>
@@ -260,24 +303,52 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     gap: 18,
   },
-  loadingWrap: {
+  openingScreen: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 28,
+  },
+  openingContent: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingTop: 28,
   },
-  loadingEyebrow: {
+  openingLogo: {
+    height: 176,
+    marginBottom: 22,
+    width: 176,
+  },
+  openingEyebrow: {
     color: '#A8D8C6',
     fontFamily: Fonts.mono,
     fontSize: 14,
     letterSpacing: 1.5,
-    marginBottom: 10,
+    marginBottom: 12,
     textTransform: 'uppercase',
   },
-  loadingTitle: {
+  openingTitle: {
     color: '#F6EFE5',
     fontFamily: Fonts.rounded,
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: 34,
+    lineHeight: 38,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  openingSubtitle: {
+    color: '#D0D9D4',
+    fontSize: 16,
+    lineHeight: 24,
+    maxWidth: 280,
+    textAlign: 'center',
+  },
+  openingCredit: {
+    color: '#F6EFE5',
+    fontFamily: Fonts.mono,
+    fontSize: 13,
+    letterSpacing: 1.3,
+    textAlign: 'center',
   },
   orbLarge: {
     position: 'absolute',
@@ -467,6 +538,43 @@ const styles = StyleSheet.create({
     color: '#7D3C22',
     fontSize: 14,
     lineHeight: 20,
+  },
+  testVoiceRow: {
+    alignItems: 'center',
+    backgroundColor: '#EFE4D3',
+    borderRadius: 18,
+    flexDirection: 'row',
+    gap: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  testVoiceCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  testVoiceLabel: {
+    color: '#112A24',
+    fontFamily: Fonts.rounded,
+    fontSize: 16,
+  },
+  testVoiceHint: {
+    color: '#41524A',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  testVoiceButton: {
+    alignItems: 'center',
+    backgroundColor: '#16362E',
+    borderRadius: 14,
+    justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 102,
+    paddingHorizontal: 14,
+  },
+  testVoiceButtonText: {
+    color: '#F6EFE5',
+    fontFamily: Fonts.rounded,
+    fontSize: 15,
   },
   controlRow: {
     flexDirection: 'row',

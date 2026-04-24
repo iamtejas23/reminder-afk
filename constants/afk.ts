@@ -1,4 +1,4 @@
-import type { ReminderStage } from '@/types/afk';
+import type { ReminderStage, ReminderStageKey } from '@/types/afk';
 
 export const DEFAULT_DURATION_MINUTES = 30;
 export const MIN_DURATION_MINUTES = 5;
@@ -17,8 +17,16 @@ export const STORAGE_KEYS = {
 export const REMINDER_SOURCE = 'reminder-afk';
 
 export const ANDROID_NOTIFICATION_CHANNELS = {
-  quiet: 'afk-reminders-quiet',
-  vibrate: 'afk-reminders-vibrate',
+  silentQuiet: 'afk-reminders-silent-quiet',
+  silentVibrate: 'afk-reminders-silent-vibrate',
+  voiceQuietPrefix: 'afk-reminders-voice-quiet',
+  voiceVibratePrefix: 'afk-reminders-voice-vibrate',
+} as const;
+
+export const REMINDER_SOUND_FILES: Record<ReminderStageKey, string> = {
+  almost: 'afk_almost.wav',
+  final: 'afk_final.wav',
+  complete: 'afk_complete.wav',
 } as const;
 
 export const REMINDER_STAGES: ReminderStage[] = [
