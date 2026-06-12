@@ -17,6 +17,7 @@ import {
   requestAfkNotificationPermissionsAsync,
   scheduleReminderNotifications,
   scheduleTestReminderNotification,
+  setNotificationForegroundState,
 } from '@/lib/afk-notifications';
 import { speakReminder, stopReminderSpeech } from '@/lib/afk-speech';
 import {
@@ -26,6 +27,10 @@ import {
   saveAfkPreferences,
   saveAfkSession,
 } from '@/lib/afk-storage';
+import {
+  startAfkTimerNotificationAsync,
+  stopAfkTimerNotificationAsync,
+} from '@/lib/afk-timer-notification';
 import type {
   AfkSession,
   AfkTimerState,
@@ -214,6 +219,7 @@ export function useAfkTimer() {
   }
 
   completeSessionRef.current = async () => {
+    await stopAfkTimerNotificationAsync();
     triggeredReminderStageKeysRef.current = getTriggeredReminderStageKeys(
       stateRef.current.durationMinutes,
       stateRef.current.durationMinutes * MS_PER_MINUTE
@@ -378,9 +384,48 @@ export function useAfkTimer() {
   }, [state.status]);
 
   useEffect(() => {
+    if (!state.isReady || Platform.OS !== 'android') {
+      return;
+    }
+
+    if (
+      state.status !== 'running' ||
+      state.startedAt === null ||
+      state.permissionState !== 'granted'
+    ) {
+      void stopAfkTimerNotificationAsync();
+      return;
+    }
+
+    const endAtMs =
+      state.startedAt +
+      state.durationMinutes * MS_PER_MINUTE -
+      state.elapsedBeforePauseMs;
+
+    void startAfkTimerNotificationAsync({
+      durationMinutes: state.durationMinutes,
+      endAtMs,
+    }).catch(() => {
+      setState((currentState) => ({
+        ...currentState,
+        errorMessage:
+          'The ongoing Android timer notification could not start. Check notification and battery permissions, then try again.',
+      }));
+    });
+  }, [
+    state.durationMinutes,
+    state.elapsedBeforePauseMs,
+    state.isReady,
+    state.permissionState,
+    state.startedAt,
+    state.status,
+  ]);
+
+  useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       const previousAppState = appStateRef.current;
       appStateRef.current = nextAppState;
+      setNotificationForegroundState(nextAppState === 'active');
       const wasActive = previousAppState === 'active';
 
       if (nextAppState !== 'active') {
@@ -413,19 +458,6 @@ export function useAfkTimer() {
       subscription.remove();
     };
   }, []);
-
-  useEffect(() => {
-    if (
-      !state.isReady ||
-      state.status !== 'running' ||
-      state.scheduledNotificationIds.length === 0 ||
-      appStateRef.current !== 'active'
-    ) {
-      return;
-    }
-
-    void syncBackgroundReminderNotifications('active');
-  }, [state.isReady, state.scheduledNotificationIds.length, state.status]);
 
   useEffect(() => {
     if (state.status !== 'running' || state.sessionId === null || appStateRef.current !== 'active') {
@@ -537,7 +569,6 @@ export function useAfkTimer() {
     let nextNotificationIds = state.scheduledNotificationIds;
 
     if (
-      appStateRef.current !== 'active' &&
       state.status === 'running' &&
       state.sessionId &&
       state.permissionState === 'granted'
@@ -578,7 +609,6 @@ export function useAfkTimer() {
     let nextNotificationIds = state.scheduledNotificationIds;
 
     if (
-      appStateRef.current !== 'active' &&
       state.status === 'running' &&
       state.sessionId &&
       state.permissionState === 'granted'
@@ -617,7 +647,7 @@ export function useAfkTimer() {
     try {
       permissionState = await requestAfkNotificationPermissionsAsync();
 
-      if (permissionState === 'granted' && nextSessionId && appStateRef.current !== 'active') {
+      if (permissionState === 'granted' && nextSessionId) {
         scheduledNotificationIds = await scheduleReminderNotifications({
           durationMinutes: state.durationMinutes,
           elapsedMs: elapsedBeforeStart,
@@ -666,6 +696,7 @@ export function useAfkTimer() {
 
     await Promise.all([
       cancelReminderNotifications(state.scheduledNotificationIds),
+      stopAfkTimerNotificationAsync(),
       stopReminderSpeech(),
     ]);
 
@@ -691,6 +722,7 @@ export function useAfkTimer() {
   async function reset() {
     await Promise.all([
       cancelReminderNotifications(state.scheduledNotificationIds),
+      stopAfkTimerNotificationAsync(),
       stopReminderSpeech(),
     ]);
 

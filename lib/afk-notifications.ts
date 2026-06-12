@@ -14,12 +14,19 @@ import type {
   ReminderStageKey,
 } from '@/types/afk';
 
+// Suppresses banners/sound when app is foregrounded — JS timer handles in-app reminders.
+let _isAppForegrounded = true;
+
+export function setNotificationForegroundState(foregrounded: boolean) {
+  _isAppForegrounded = foregrounded;
+}
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldPlaySound: true,
+    shouldPlaySound: !_isAppForegrounded,
     shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
+    shouldShowBanner: !_isAppForegrounded,
+    shouldShowList: !_isAppForegrounded,
   }),
 });
 
