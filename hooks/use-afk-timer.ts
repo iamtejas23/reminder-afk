@@ -441,6 +441,21 @@ export function useAfkTimer() {
       setNowMs(now);
       void syncBackgroundReminderNotifications('active');
 
+      // Re-check permission every time app comes to foreground — user may have
+      // just enabled notifications in system Settings while the app was in background.
+      if (Platform.OS !== 'web') {
+        void requestAfkNotificationPermissionsAsync().then((freshPermission) => {
+          setState((s) => {
+            if (s.permissionState === freshPermission) return s;
+            return {
+              ...s,
+              permissionState: freshPermission,
+              errorMessage: freshPermission === 'granted' ? null : s.errorMessage,
+            };
+          });
+        });
+      }
+
       if (
         currentState.status === 'running' &&
         calculateElapsedMs(
@@ -807,7 +822,7 @@ export function useAfkTimer() {
           : 'Queued on start',
     permissionMessage:
       state.permissionState === 'denied'
-        ? 'Local notification permission is off. The timer can still speak while the app is open, but screen-off and background spoken reminders need notification access.'
+        ? 'Notification permission is off — background and lock-screen reminders will not fire. Tap here to open Settings and enable notifications.'
         : state.permissionState === 'unsupported'
           ? 'This platform does not support the mobile notification flow used by the AFK timer.'
           : state.errorMessage,

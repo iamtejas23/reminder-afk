@@ -459,10 +459,16 @@ export default function HomeScreen() {
                 accessibilityRole="button"
                 onPress={() => Linking.openSettings()}
                 style={styles.permissionNote}>
-                <Ionicons name="warning-outline" size={16} color="#7D3C22" style={{ marginTop: 1 }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.permissionNoteText}>{timer.permissionMessage}</Text>
-                  <Text style={styles.permissionNoteCta}>Tap here to open Settings and allow notifications →</Text>
+                <View style={styles.permissionNoteTop}>
+                  <Ionicons name="notifications-off-outline" size={18} color="#7D3C22" />
+                  <Text style={styles.permissionNoteTitle}>Notifications disabled</Text>
+                </View>
+                <Text style={styles.permissionNoteText}>
+                  Background and lock-screen reminders won't fire without notification access.
+                </Text>
+                <View style={styles.permissionNoteCta}>
+                  <Ionicons name="settings-outline" size={14} color="#7D3C22" />
+                  <Text style={styles.permissionNoteCtaText}>Tap here → Open Settings → Enable Notifications</Text>
                 </View>
               </Pressable>
             ) : null}
@@ -818,19 +824,36 @@ const styles = StyleSheet.create({
   },
   permissionNote: {
     backgroundColor: '#F4D5C8',
+    borderColor: '#E8A898',
     borderRadius: 16,
-    flexDirection: 'row',
-    gap: 8,
+    borderWidth: 1,
+    gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  permissionNoteTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  permissionNoteTitle: {
+    color: '#7D3C22',
+    fontFamily: Fonts.rounded,
+    fontSize: 15,
+    fontWeight: '700',
   },
   permissionNoteText: {
     color: '#7D3C22',
     fontSize: 13,
     lineHeight: 19,
-    marginBottom: 6,
   },
   permissionNoteCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 2,
+  },
+  permissionNoteCtaText: {
     color: '#7D3C22',
     fontSize: 13,
     fontWeight: '700',
