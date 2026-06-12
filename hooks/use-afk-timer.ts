@@ -246,7 +246,11 @@ export function useAfkTimer() {
     let isMounted = true;
 
     void (async () => {
-      const [preferences, savedSession] = await Promise.all([loadAfkPreferences(), loadAfkSession()]);
+      const [preferences, savedSession, permissionState] = await Promise.all([
+        loadAfkPreferences(),
+        loadAfkSession(),
+        Platform.OS !== 'web' ? requestAfkNotificationPermissionsAsync() : Promise.resolve('unsupported' as const),
+      ]);
       if (!isMounted) {
         return;
       }
@@ -271,6 +275,7 @@ export function useAfkTimer() {
         ...preferences,
         durationMinutes: restoredDurationMinutes,
         isReady: true,
+        permissionState,
       };
 
       if (savedSession) {
@@ -388,11 +393,7 @@ export function useAfkTimer() {
       return;
     }
 
-    if (
-      state.status !== 'running' ||
-      state.startedAt === null ||
-      state.permissionState !== 'granted'
-    ) {
+    if (state.status !== 'running' || state.startedAt === null) {
       void stopAfkTimerNotificationAsync();
       return;
     }

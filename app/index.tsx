@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -454,10 +455,16 @@ export default function HomeScreen() {
             </View>
 
             {timer.permissionMessage ? (
-              <View style={styles.permissionNote}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => Linking.openSettings()}
+                style={styles.permissionNote}>
                 <Ionicons name="warning-outline" size={16} color="#7D3C22" style={{ marginTop: 1 }} />
-                <Text style={styles.permissionNoteText}>{timer.permissionMessage}</Text>
-              </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.permissionNoteText}>{timer.permissionMessage}</Text>
+                  <Text style={styles.permissionNoteCta}>Tap here to open Settings and allow notifications →</Text>
+                </View>
+              </Pressable>
             ) : null}
           </View>
 
@@ -819,9 +826,15 @@ const styles = StyleSheet.create({
   },
   permissionNoteText: {
     color: '#7D3C22',
-    flex: 1,
     fontSize: 13,
     lineHeight: 19,
+    marginBottom: 6,
+  },
+  permissionNoteCta: {
+    color: '#7D3C22',
+    fontSize: 13,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
   testVoiceRow: {
     alignItems: 'center',
