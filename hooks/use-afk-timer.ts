@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Platform, Vibration } from 'react-native';
-import * as Notifications from 'expo-notifications';
 
 import {
   COUNTDOWN_TICK_MS,
@@ -12,7 +12,9 @@ import {
   REMINDER_STAGES,
 } from '@/constants/afk';
 import {
+  addReminderNotificationReceivedListener,
   cancelReminderNotifications,
+  dismissScheduledNotificationAsync,
   getReminderNotificationData,
   requestAfkNotificationPermissionsAsync,
   scheduleReminderNotifications,
@@ -241,6 +243,18 @@ export function useAfkTimer() {
       };
     });
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadAfkPreferences().then((preferences) => {
+        setState((currentState) => ({
+          ...currentState,
+          vibrationEnabled: preferences.vibrationEnabled,
+          voiceEnabled: preferences.voiceEnabled,
+        }));
+      });
+    }, [])
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -521,7 +535,7 @@ export function useAfkTimer() {
       return;
     }
 
-    const subscription = Notifications.addNotificationReceivedListener((notification) => {
+    const subscription = addReminderNotificationReceivedListener((notification) => {
       const currentState = stateRef.current;
       const reminderData = getReminderNotificationData(notification);
 
@@ -771,7 +785,7 @@ export function useAfkTimer() {
 
         if (notificationId) {
           setTimeout(() => {
-            void Notifications.dismissNotificationAsync(notificationId).catch(() => undefined);
+            void dismissScheduledNotificationAsync(notificationId).catch(() => undefined);
           }, 4_500);
         }
       } else {
@@ -824,7 +838,9 @@ export function useAfkTimer() {
       state.permissionState === 'denied'
         ? 'Notification permission is off — background and lock-screen reminders will not fire. Tap here to open Settings and enable notifications.'
         : state.permissionState === 'unsupported'
-          ? 'This platform does not support the mobile notification flow used by the AFK timer.'
+          ? Platform.OS === 'android'
+            ? 'Expo Go on Android cannot schedule background notifications. Use a dev build or release APK for lock-screen reminders; foreground timer, voice, and vibration still work here.'
+            : 'This platform does not support the mobile notification flow used by the AFK timer.'
           : state.errorMessage,
     progress,
     progressPercent,

@@ -1,5 +1,5 @@
+import type { Notification } from 'expo-notifications';
 import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
 
 import {
   ANDROID_NOTIFICATION_CHANNELS,
@@ -8,27 +8,23 @@ import {
   REMINDER_SOURCE,
   REMINDER_STAGES,
 } from '@/constants/afk';
+import {
+  configureExpoNotificationHandler,
+  getExpoNotificationsModule,
+  supportsNativeExpoNotifications,
+} from '@/lib/expo-notifications-client';
 import type {
   NotificationPermissionState,
   ReminderNotificationData,
   ReminderStageKey,
 } from '@/types/afk';
 
-// Suppresses banners/sound when app is foregrounded — JS timer handles in-app reminders.
 let _isAppForegrounded = true;
 
 export function setNotificationForegroundState(foregrounded: boolean) {
   _isAppForegrounded = foregrounded;
+  configureExpoNotificationHandler(() => _isAppForegrounded);
 }
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: !_isAppForegrounded,
-    shouldSetBadge: false,
-    shouldShowBanner: !_isAppForegrounded,
-    shouldShowList: !_isAppForegrounded,
-  }),
-});
 
 type ScheduleReminderNotificationsArgs = {
   durationMinutes: number;
@@ -78,7 +74,12 @@ function getVibrationPattern(vibrationEnabled: boolean) {
   return vibrationEnabled ? [0, 250, 160, 250] : [0];
 }
 
-function createReminderContent(sessionId: string, stageKey: ReminderStageKey, voiceEnabled: boolean) {
+function createReminderContent(
+  Notifications: NonNullable<ReturnType<typeof getExpoNotificationsModule>>,
+  sessionId: string,
+  stageKey: ReminderStageKey,
+  voiceEnabled: boolean
+) {
   const stage = getReminderStage(stageKey);
 
   return {
@@ -92,11 +93,12 @@ function createReminderContent(sessionId: string, stageKey: ReminderStageKey, vo
       source: REMINDER_SOURCE,
       stageKey: stage.key,
     },
-  } satisfies Notifications.NotificationContentInput;
+  };
 }
 
 export async function ensureNotificationChannelsAsync(): Promise<void> {
-  if (Platform.OS !== 'android') {
+  const Notifications = getExpoNotificationsModule();
+  if (!Notifications || Platform.OS !== 'android') {
     return;
   }
 
@@ -148,10 +150,16 @@ export async function ensureNotificationChannelsAsync(): Promise<void> {
 }
 
 export async function requestAfkNotificationPermissionsAsync(): Promise<NotificationPermissionState> {
-  if (Platform.OS === 'web') {
+  if (Platform.OS === 'web' || !supportsNativeExpoNotifications()) {
     return 'unsupported';
   }
 
+  const Notifications = getExpoNotificationsModule();
+  if (!Notifications) {
+    return 'unsupported';
+  }
+
+  configureExpoNotificationHandler(() => _isAppForegrounded);
   await ensureNotificationChannelsAsync();
 
   const currentPermissions = await Notifications.getPermissionsAsync();
@@ -177,7 +185,8 @@ export async function scheduleReminderNotifications({
   vibrationEnabled,
   voiceEnabled,
 }: ScheduleReminderNotificationsArgs): Promise<string[]> {
-  if (Platform.OS === 'web') {
+  const Notifications = getExpoNotificationsModule();
+  if (!Notifications || Platform.OS === 'web') {
     return [];
   }
 
@@ -203,7 +212,7 @@ export async function scheduleReminderNotifications({
 
     await Notifications.scheduleNotificationAsync({
       identifier,
-      content: createReminderContent(sessionId, stage.key, voiceEnabled),
+      content: createReminderContent(Notifications, sessionId, stage.key, voiceEnabled),
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: triggerDate,
@@ -221,7 +230,8 @@ export async function scheduleTestReminderNotification({
   stageKey = 'almost',
   vibrationEnabled,
 }: TestReminderNotificationArgs): Promise<string | null> {
-  if (Platform.OS === 'web') {
+  const Notifications = getExpoNotificationsModule();
+  if (!Notifications || Platform.OS === 'web') {
     return null;
   }
 
@@ -239,7 +249,7 @@ export async function scheduleTestReminderNotification({
 
   await Notifications.scheduleNotificationAsync({
     identifier,
-    content: createReminderContent(sessionId, stageKey, true),
+    content: createReminderContent(Notifications, sessionId, stageKey, true),
     trigger: channelId ? { channelId } : null,
   });
 
@@ -247,6 +257,11 @@ export async function scheduleTestReminderNotification({
 }
 
 export async function cancelReminderNotifications(notificationIds: string[]): Promise<void> {
+  const Notifications = getExpoNotificationsModule();
+  if (!Notifications) {
+    return;
+  }
+
   await Promise.all(
     notificationIds.map((notificationId) =>
       Notifications.cancelScheduledNotificationAsync(notificationId).catch(() => undefined)
@@ -254,8 +269,28 @@ export async function cancelReminderNotifications(notificationIds: string[]): Pr
   );
 }
 
+export async function dismissScheduledNotificationAsync(notificationId: string): Promise<void> {
+  const Notifications = getExpoNotificationsModule();
+  if (!Notifications) {
+    return;
+  }
+
+  await Notifications.dismissNotificationAsync(notificationId);
+}
+
+export function addReminderNotificationReceivedListener(
+  listener: (notification: Notification) => void
+) {
+  const Notifications = getExpoNotificationsModule();
+  if (!Notifications) {
+    return { remove: () => undefined };
+  }
+
+  return Notifications.addNotificationReceivedListener(listener);
+}
+
 export function getReminderNotificationData(
-  notification: Notifications.Notification
+  notification: Notification
 ): ReminderNotificationData | null {
   const data = notification.request.content.data;
 

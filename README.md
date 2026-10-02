@@ -16,6 +16,42 @@
 npm install
 ```
 
+## CI and GitHub Releases (Android APK)
+
+Two workflows live under `.github/workflows/`:
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `ci.yml` | Push / PR to `main` | Fast ESLint check |
+| `release-apk.yml` | Manual **Actions → Release APK** | Bump version, build optimized arm64 APK, publish [GitHub Release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository) |
+
+### One-time GitHub secrets
+
+Add these in **Settings → Secrets and variables → Actions**:
+
+| Secret | Description |
+|--------|-------------|
+| `ANDROID_KEYSTORE_BASE64` | Base64 of your `.keystore` / `.jks` file (`base64 -w0 my-release-key.keystore`) |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
+| `ANDROID_KEY_ALIAS` | Key alias |
+| `ANDROID_KEY_PASSWORD` | Key password |
+
+### Release flow
+
+1. Open **Actions → Release APK → Run workflow**.
+2. Choose `patch`, `minor`, or `major` (default: `patch`).
+3. The workflow bumps `package.json` / `app.json`, increments `android.versionCode`, builds a **single-arch arm64** release APK with R8 minify + resource shrinking, then uploads the APK and SHA256 checksum to a new GitHub Release tagged `vX.Y.Z`.
+
+Local release build (after creating `android/` via prebuild and setting signing env vars):
+
+```bash
+export ANDROID_KEYSTORE_BASE64=...
+export ANDROID_KEYSTORE_PASSWORD=...
+export ANDROID_KEY_ALIAS=...
+export ANDROID_KEY_PASSWORD=...
+npm run android:release:ci
+```
+
 ## Run
 
 ```bash

@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Linking,
@@ -24,10 +25,10 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PresetButton } from '@/components/afk/preset-button';
-import { SettingSwitch } from '@/components/afk/setting-switch';
 import { DURATION_STEP_MINUTES, PRESET_DURATIONS } from '@/constants/afk';
 import { Fonts } from '@/constants/theme';
 import { useAfkTimer } from '@/hooks/use-afk-timer';
+import { TAB_BAR_HIDDEN_STYLE, useTabBarMetrics } from '@/hooks/use-tab-bar-metrics';
 
 // ─── Circular progress ring (two-halves clip technique) ───────────────────────
 function CircularRing({
@@ -172,17 +173,22 @@ const RING_FILL = {
 } as const;
 
 const OPENING_SCREEN_MS = 3000;
-const openingLogo = require('../assets/images/splash-icon.png');
+const openingLogo = require('../../assets/images/splash-icon.png');
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const timer = useAfkTimer();
+  const navigation = useNavigation();
+  const { resolvedTabBarStyle, scrollBottomPadding } = useTabBarMetrics();
   const [draftDuration, setDraftDuration] = useState(() => String(timer.durationMinutes));
   const [openingDelayComplete, setOpeningDelayComplete] = useState(false);
+  const showOpening = !timer.isReady || !openingDelayComplete;
 
-  useEffect(() => {
-    setDraftDuration(String(timer.durationMinutes));
-  }, [timer.durationMinutes]);
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      tabBarStyle: showOpening ? TAB_BAR_HIDDEN_STYLE : resolvedTabBarStyle,
+    });
+  }, [navigation, resolvedTabBarStyle, showOpening]);
 
   useEffect(() => {
     const id = setTimeout(() => setOpeningDelayComplete(true), OPENING_SCREEN_MS);
@@ -195,9 +201,9 @@ export default function HomeScreen() {
   }
 
   // ─── Splash ───────────────────────────────────────────────────────────────
-  if (!timer.isReady || !openingDelayComplete) {
+  if (showOpening) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <StatusBar style="light" />
         <View style={styles.openingScreen}>
           <View style={styles.orbLarge} />
@@ -222,7 +228,7 @@ export default function HomeScreen() {
 
   // ─── Main UI ──────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <StatusBar style="light" />
       <KeyboardAvoidingView
         style={styles.flex}
@@ -231,7 +237,7 @@ export default function HomeScreen() {
         <View style={styles.orbSmall} />
 
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
 
@@ -378,6 +384,7 @@ export default function HomeScreen() {
                 ]}>
                 <Text style={styles.durationInputLabel}>Minutes</Text>
                 <TextInput
+                  key={timer.durationMinutes}
                   value={draftDuration}
                   onChangeText={setDraftDuration}
                   onBlur={commitDuration}
@@ -413,68 +420,18 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* ── Reminder Settings ── */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeaderRow}>
-              <Ionicons name="settings-outline" size={18} color="#6E7B74" />
-              <Text style={styles.sectionEyebrow}>Reminder Settings</Text>
-            </View>
-            <Text style={styles.sectionTitle}>Control how the app nudges you back.</Text>
-
-            <SettingSwitch
-              description="Spoken reminder audio via notification — works when screen is off or app is closed."
-              label="Voice prompts"
-              value={timer.voiceEnabled}
-              onValueChange={timer.setVoiceEnabled}
-            />
-            <View style={styles.divider} />
-            <SettingSwitch
-              description="Vibration on reminder notifications and in-app stage triggers."
-              label="Vibration"
-              value={timer.vibrationEnabled}
-              onValueChange={timer.setVibrationEnabled}
-            />
-
-            <View style={styles.testVoiceRow}>
-              <View style={styles.testVoiceCopy}>
-                <View style={styles.testVoiceIconRow}>
-                  <Ionicons name="mic-outline" size={16} color="#112A24" />
-                  <Text style={styles.testVoiceLabel}>Test voice now</Text>
-                </View>
-                <Text style={styles.testVoiceHint}>
-                  Plays the first spoken reminder immediately to verify sound.
-                </Text>
+          {timer.permissionMessage ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => Linking.openSettings()}
+              style={styles.permissionNote}>
+              <View style={styles.permissionNoteTop}>
+                <Ionicons name="notifications-off-outline" size={18} color="#7D3C22" />
+                <Text style={styles.permissionNoteTitle}>Notifications</Text>
               </View>
-              <Pressable
-                accessibilityRole="button"
-                onPress={timer.testVoice}
-                style={styles.testVoiceButton}>
-                <Ionicons name="volume-high-outline" size={16} color="#F6EFE5" />
-                <Text style={styles.testVoiceButtonText}>Test</Text>
-              </Pressable>
-            </View>
-
-            {timer.permissionMessage ? (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => Linking.openSettings()}
-                style={styles.permissionNote}>
-                <View style={styles.permissionNoteTop}>
-                  <Ionicons name="notifications-off-outline" size={18} color="#7D3C22" />
-                  <Text style={styles.permissionNoteTitle}>Notifications disabled</Text>
-                </View>
-                <Text style={styles.permissionNoteText}>
-                  Background and lock-screen reminders won't fire without notification access.
-                </Text>
-                <View style={styles.permissionNoteCta}>
-                  <Ionicons name="settings-outline" size={14} color="#7D3C22" />
-                  <Text style={styles.permissionNoteCtaText}>Tap here → Open Settings → Enable Notifications</Text>
-                </View>
-              </Pressable>
-            ) : null}
-          </View>
-
-          <Text style={styles.footerCredit}>built by Tejas Mane</Text>
+              <Text style={styles.permissionNoteText}>{timer.permissionMessage}</Text>
+            </Pressable>
+          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -490,7 +447,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scrollContent: {
     paddingHorizontal: 18,
-    paddingBottom: 36,
     paddingTop: 8,
     gap: 16,
   },

@@ -12,6 +12,7 @@
       "supportsTablet": true
     },
     "android": {
+      "versionCode": 6,
       "adaptiveIcon": {
         "backgroundColor": "#112A24",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -38,6 +39,15 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ],
       "expo-router",
       [
         "expo-notifications",
@@ -60,7 +70,11 @@
             "backgroundColor": "#112A24"
           }
         }
-      ]
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
