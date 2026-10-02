@@ -40,7 +40,7 @@ If these are **not** set, **Release APK** still runs and publishes an APK signed
 
 1. Open **Actions → Release APK → Run workflow**.
 2. Choose `patch`, `minor`, or `major` (default: `patch`).
-3. The workflow bumps `package.json` / `app.json`, increments `android.versionCode`, builds a **single-arch arm64** release APK with R8 minify + resource shrinking, then uploads the APK and SHA256 checksum to a new GitHub Release tagged `vX.Y.Z`.
+3. The workflow bumps `package.json` / `app.json`, increments `android.versionCode`, builds a **single-arch arm64** release APK (CI skips R8 minify for speed/reliability; local `android:release:ci` still uses minify from `app.json`), then uploads the APK and SHA256 checksum to a new GitHub Release tagged `vX.Y.Z`.
 
 Local release build (after creating `android/` via prebuild and setting signing env vars):
 

@@ -17,7 +17,7 @@ permissions:
 
 concurrency:
   group: release-apk
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   NODE_ENV: production
@@ -65,9 +65,6 @@ jobs:
       - name: Generate native Android project
         run: npm run android:prebuild
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
       - name: Configure release signing
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -83,8 +80,19 @@ jobs:
           fi
           node scripts/patch-android-release-signing.mjs
 
-      - name: Build release APK (arm64, optimized)
-        run: npm run android:release:apk
+      - name: Configure CI Gradle
+        run: node scripts/configure-ci-android-gradle.mjs
+
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build release APK (arm64)
+        timeout-minutes: 45
+        run: |
+          cd android
+          NODE_ENV=production ./gradlew app:assembleRelease --no-daemon --stacktrace \
+            -PreactNativeArchitectures=arm64-v8a \
+            -Pexpo.useLegacyPackaging=true
 
       - name: Package APK artifact
         env:
