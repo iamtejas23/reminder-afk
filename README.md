@@ -25,9 +25,9 @@ Two workflows live under `.github/workflows/`:
 | `ci.yml` | Push / PR to `main` | Fast ESLint check |
 | `release-apk.yml` | Manual **Actions → Release APK** | Bump version, build optimized arm64 APK, publish [GitHub Release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository) |
 
-### One-time GitHub secrets
+### One-time GitHub secrets (optional for testing)
 
-Add these in **Settings → Secrets and variables → Actions**:
+If these are **not** set, **Release APK** still runs and publishes an APK signed with the **debug keystore** (fine for sideloading on your own phone). For production / Play Store, add all four in **Settings → Secrets and variables → Actions**:
 
 | Secret | Description |
 |--------|-------------|
