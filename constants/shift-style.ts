@@ -18,7 +18,7 @@ export const SHIFT_KIND_PRESETS: ShiftKindPreset[] = [
     defaultName: 'Morning shift',
     defaultStart: '07:00',
     defaultEnd: '15:00',
-    color: '#3B8F78',
+    color: '#3D927B',
   },
   {
     kind: 'afternoon',
@@ -27,7 +27,7 @@ export const SHIFT_KIND_PRESETS: ShiftKindPreset[] = [
     defaultName: 'Afternoon shift',
     defaultStart: '12:00',
     defaultEnd: '18:00',
-    color: '#E46E42',
+    color: '#F17855',
   },
   {
     kind: 'evening',

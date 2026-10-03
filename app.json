@@ -2,7 +2,7 @@
   "expo": {
     "name": "reminder-afk",
     "slug": "reminder-afk",
-    "version": "1.1.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "reminderafk",
@@ -13,7 +13,7 @@
     "android": {
       "versionCode": 8,
       "adaptiveIcon": {
-        "backgroundColor": "#112A24",
+        "backgroundColor": "#102A27",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -60,12 +60,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "image": "./assets/images/android-icon-foreground.png",
+          "imageWidth": 220,
           "resizeMode": "contain",
-          "backgroundColor": "#112A24",
+          "backgroundColor": "#F5F2E9",
           "dark": {
-            "backgroundColor": "#112A24"
+            "backgroundColor": "#102A27"
           }
         }
       ],

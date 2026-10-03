@@ -22,15 +22,6 @@ export default function TabLayout() {
         tabBarItemStyle: styles.tabItem,
       }}>
       <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Timer',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'hourglass' : 'hourglass-outline'} size={24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="roster"
         options={{
           title: 'Roster',
@@ -40,6 +31,15 @@ export default function TabLayout() {
               size={24}
               color={color}
             />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Break',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'hourglass' : 'hourglass-outline'} size={24} color={color} />
           ),
         }}
       />

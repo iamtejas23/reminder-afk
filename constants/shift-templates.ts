@@ -21,7 +21,7 @@ export const SHIFT_TEMPLATES: ShiftTemplateDefinition[] = [
     kind: 'morning',
     label: 'Morning',
     emoji: '🌅',
-    color: '#3B8F78',
+    color: '#3D927B',
     startTime: '07:00',
     endTime: '15:00',
     description: '7:00 AM – 3:00 PM',

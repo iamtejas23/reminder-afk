@@ -248,7 +248,7 @@ export default function RosterScreen() {
             ))}
             {selectedDayShifts.length === 0 ? (
               <View style={styles.emptyDay}>
-                <Ionicons name="sunny-outline" size={22} color="#8FA89C" />
+                <Ionicons name="sunny-outline" size={22} color="#9AB3A9" />
                 <Text style={styles.emptyDayText}>No shifts on this date yet.</Text>
               </View>
             ) : (
@@ -269,7 +269,7 @@ export default function RosterScreen() {
               accessibilityRole="button"
               onPress={() => void roster.addShift(selectedDateKey)}
               style={styles.addButton}>
-              <Ionicons name="add-circle" size={20} color="#F6EFE5" />
+              <Ionicons name="add-circle" size={20} color="#F5F2E9" />
               <Text style={styles.addButtonText}>Add shift on this day</Text>
             </Pressable>
           </View>
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   addButtonText: {
-    color: '#F6EFE5',
+    color: '#F5F2E9',
     fontFamily: Fonts.rounded,
     fontSize: 16,
   },

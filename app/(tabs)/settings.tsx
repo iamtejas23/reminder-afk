@@ -89,7 +89,7 @@ export default function SettingsScreen() {
     }
 
     try {
-      await shareRosterBackupText('reminder-afk roster', buildFullBackupText(roster.data));
+      await shareRosterBackupText('Shiftwise roster', buildFullBackupText(roster.data));
     } catch {
       Alert.alert('Could not share backup', 'Try copying the backup instead.');
     }
@@ -177,7 +177,7 @@ export default function SettingsScreen() {
               accessibilityRole="button"
               onPress={() => void testVoicePrompt()}
               style={styles.secondaryAction}>
-              <Ionicons name="volume-high-outline" size={18} color="#112A24" />
+              <Ionicons name="volume-high-outline" size={18} color="#102A27" />
               <Text style={styles.secondaryActionText}>Test voice prompt</Text>
             </Pressable>
           </View>
@@ -191,7 +191,7 @@ export default function SettingsScreen() {
               onValueChange={(value) => void roster.setRemindersEnabled(value)}
             />
             <Pressable accessibilityRole="button" onPress={() => void roster.resyncNotifications()} style={styles.secondaryAction}>
-              <Ionicons name="refresh-circle-outline" size={18} color="#112A24" />
+              <Ionicons name="refresh-circle-outline" size={18} color="#102A27" />
               <Text style={styles.secondaryActionText}>Resync roster notifications</Text>
             </Pressable>
             <Text style={styles.sectionHint}>
@@ -199,15 +199,15 @@ export default function SettingsScreen() {
               restore on a new install or device.
             </Text>
             <Pressable accessibilityRole="button" onPress={() => void copyFullRosterBackup()} style={styles.secondaryAction}>
-              <Ionicons name="copy-outline" size={18} color="#112A24" />
+              <Ionicons name="copy-outline" size={18} color="#102A27" />
               <Text style={styles.secondaryActionText}>Copy full roster backup</Text>
             </Pressable>
             <Pressable accessibilityRole="button" onPress={() => void shareFullRosterBackup()} style={styles.secondaryAction}>
-              <Ionicons name="share-outline" size={18} color="#112A24" />
+              <Ionicons name="share-outline" size={18} color="#102A27" />
               <Text style={styles.secondaryActionText}>Share full roster backup</Text>
             </Pressable>
             <Pressable accessibilityRole="button" onPress={() => setRestoreModalVisible(true)} style={styles.primaryAction}>
-              <Ionicons name="download-outline" size={18} color="#F6EFE5" />
+              <Ionicons name="download-outline" size={18} color="#F5F2E9" />
               <Text style={styles.primaryActionText}>Restore roster from backup</Text>
             </Pressable>
           </View>
@@ -215,11 +215,11 @@ export default function SettingsScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>System</Text>
             <Pressable accessibilityRole="button" onPress={() => void requestNotifications()} style={styles.secondaryAction}>
-              <Ionicons name="notifications-outline" size={18} color="#112A24" />
+              <Ionicons name="notifications-outline" size={18} color="#102A27" />
               <Text style={styles.secondaryActionText}>Request notification permission</Text>
             </Pressable>
             <Pressable accessibilityRole="button" onPress={() => void openDeviceSettings()} style={styles.secondaryAction}>
-              <Ionicons name="settings-outline" size={18} color="#112A24" />
+              <Ionicons name="settings-outline" size={18} color="#102A27" />
               <Text style={styles.secondaryActionText}>Open device settings</Text>
             </Pressable>
             {permissionHint ? <Text style={styles.hint}>{permissionHint}</Text> : null}
@@ -228,7 +228,7 @@ export default function SettingsScreen() {
           <View style={styles.aboutCard}>
             <Ionicons name="leaf-outline" size={20} color={AppColors.mint} />
             <View style={styles.aboutCopy}>
-              <Text style={styles.aboutTitle}>reminder-afk</Text>
+              <Text style={styles.aboutTitle}>Shiftwise</Text>
               <Text style={styles.aboutMeta}>Version {appVersion}</Text>
               <Text style={styles.aboutMeta}>Built by Tejas Mane</Text>
             </View>
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     padding: 18,
   },
   cardTitle: {
-    color: '#112A24',
+    color: '#102A27',
     fontFamily: Fonts.rounded,
     fontSize: 20,
     marginBottom: 4,
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   secondaryActionText: {
-    color: '#112A24',
+    color: '#102A27',
     fontFamily: Fonts.rounded,
     fontSize: 15,
   },
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   },
   primaryAction: {
     alignItems: 'center',
-    backgroundColor: '#112A24',
+    backgroundColor: '#102A27',
     borderRadius: 14,
     flexDirection: 'row',
     gap: 10,
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   primaryActionText: {
-    color: '#F6EFE5',
+    color: '#F5F2E9',
     fontFamily: Fonts.rounded,
     fontSize: 15,
   },

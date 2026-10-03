@@ -337,7 +337,7 @@ export default function HolidaysScreen() {
                 <Text style={styles.sectionTitle}>{viewYear} holidays</Text>
                 {yearHolidays.length === 0 ? (
                   <View style={styles.emptyCard}>
-                    <Ionicons name="sunny-outline" size={26} color="#8FA89C" />
+                    <Ionicons name="sunny-outline" size={26} color="#9AB3A9" />
                     <Text style={styles.emptyTitle}>A fresh year</Text>
                     <Text style={styles.emptyText}>Choose a date above and add your first holiday.</Text>
                   </View>
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
     borderColor: '#D6E7DF',
     borderRadius: 13,
     borderWidth: 1,
-    color: '#112A24',
+    color: '#102A27',
     fontSize: 16,
     minHeight: 48,
     paddingHorizontal: 13,
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
   },
   holidayIconEmoji: { fontSize: 22 },
   holidayDetails: { flex: 1, gap: 3, minWidth: 0 },
-  holidayName: { color: '#112A24', fontFamily: Fonts.rounded, fontSize: 16 },
+  holidayName: { color: '#102A27', fontFamily: Fonts.rounded, fontSize: 16 },
   holidayDate: { color: '#67756E', fontSize: 13 },
   deleteButton: {
     alignItems: 'center',

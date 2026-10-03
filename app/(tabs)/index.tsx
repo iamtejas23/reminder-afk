@@ -75,7 +75,7 @@ function CircularRing({
   size = 220,
   strokeWidth = 16,
   trackColor = '#D6E7DF',
-  fillColor = '#E46E42',
+  fillColor = '#F17855',
 }: {
   progress: number;
   size?: number;
@@ -188,7 +188,7 @@ function PulseRing({ active, size }: { active: boolean; size: number }) {
           width: size + 24,
           height: size + 24,
           borderRadius: (size + 24) / 2,
-          backgroundColor: '#E46E42',
+          backgroundColor: '#F17855',
           pointerEvents: 'none',
         },
       ]}
@@ -198,17 +198,17 @@ function PulseRing({ active, size }: { active: boolean; size: number }) {
 
 // ─── Status accent colours ────────────────────────────────────────────────────
 const STATUS_ACCENTS = {
-  idle: '#8FA89C',
-  running: '#3B8F78',
+  idle: '#9AB3A9',
+  running: '#3D927B',
   paused: '#D48734',
-  complete: '#E46E42',
+  complete: '#F17855',
 } as const;
 
 const RING_FILL = {
   idle: '#C8D9D3',
-  running: '#E46E42',
+  running: '#F17855',
   paused: '#D48734',
-  complete: '#3B8F78',
+  complete: '#3D927B',
 } as const;
 
 const OPENING_SCREEN_MS = 3000;
@@ -250,7 +250,7 @@ export default function HomeScreen() {
           <View style={styles.orbSmall} />
           <View style={styles.openingContent}>
             <Image contentFit="contain" source={openingLogo} style={styles.openingLogo} />
-            <Text style={styles.openingEyebrow}>reminder-afk</Text>
+            <Text style={styles.openingEyebrow}>Shiftwise</Text>
             <Text style={styles.openingTitle}>Pause well.{'\n'}Return sharp.</Text>
             <Text style={styles.openingSubtitle}>
               {timer.isReady ? 'Loading your AFK desk companion...' : 'Preparing your AFK timer...'}
@@ -285,8 +285,8 @@ export default function HomeScreen() {
           {/* ── Header ── */}
           <View style={styles.header}>
             <View style={styles.headerRow}>
-              <Ionicons name="timer-outline" size={22} color="#A8D8C6" />
-              <Text style={styles.eyebrow}>reminder-afk</Text>
+              <Ionicons name="timer-outline" size={22} color="#A9DCCB" />
+              <Text style={styles.eyebrow}>Shiftwise</Text>
             </View>
             <Text style={styles.title}>Stay AFK without{'\n'}losing the thread.</Text>
           </View>
@@ -307,7 +307,7 @@ export default function HomeScreen() {
                           : 'ellipse-outline'
                   }
                   size={12}
-                  color="#F6EFE5"
+                  color="#F5F2E9"
                   style={{ marginRight: 5 }}
                 />
                 <Text style={styles.statusPillText}>{timer.statusLabel}</Text>
@@ -381,7 +381,7 @@ export default function HomeScreen() {
                 disabled={!timer.canPause}
                 onPress={timer.pause}
                 style={[styles.secondaryButton, !timer.canPause && styles.buttonDisabledOp]}>
-                <Ionicons name="pause" size={20} color="#112A24" />
+                <Ionicons name="pause" size={20} color="#102A27" />
                 <Text style={styles.secondaryButtonText}>Pause</Text>
               </Pressable>
 
@@ -390,7 +390,7 @@ export default function HomeScreen() {
                 disabled={!timer.canReset}
                 onPress={timer.reset}
                 style={[styles.ghostButton, !timer.canReset && styles.buttonDisabledOp]}>
-                <Ionicons name="refresh" size={18} color="#112A24" />
+                <Ionicons name="refresh" size={18} color="#102A27" />
                 <Text style={styles.ghostButtonText}>Reset</Text>
               </Pressable>
             </View>
@@ -415,7 +415,7 @@ export default function HomeScreen() {
                 disabled={!timer.canEditDuration}
                 onPress={() => timer.nudgeDuration(-DURATION_STEP_MINUTES)}
                 style={[styles.nudgeButton, !timer.canEditDuration && styles.buttonDisabledOp]}>
-                <Ionicons name="remove" size={22} color="#F6EFE5" />
+                <Ionicons name="remove" size={22} color="#F5F2E9" />
               </Pressable>
 
               <View
@@ -434,7 +434,7 @@ export default function HomeScreen() {
                   keyboardType="number-pad"
                   maxLength={3}
                   selectTextOnFocus={timer.canEditDuration}
-                  selectionColor="#E46E42"
+                  selectionColor="#F17855"
                   style={styles.durationInput}
                 />
               </View>
@@ -444,7 +444,7 @@ export default function HomeScreen() {
                 disabled={!timer.canEditDuration}
                 onPress={() => timer.nudgeDuration(DURATION_STEP_MINUTES)}
                 style={[styles.nudgeButton, !timer.canEditDuration && styles.buttonDisabledOp]}>
-                <Ionicons name="add" size={22} color="#F6EFE5" />
+                <Ionicons name="add" size={22} color="#F5F2E9" />
               </Pressable>
             </View>
 
@@ -483,7 +483,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#112A24',
+    backgroundColor: '#102A27',
   },
   flex: { flex: 1 },
   scrollContent: {
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
     width: 160,
   },
   openingEyebrow: {
-    color: '#A8D8C6',
+    color: '#A9DCCB',
     fontFamily: Fonts.mono,
     fontSize: 13,
     letterSpacing: 1.8,
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   openingTitle: {
-    color: '#F6EFE5',
+    color: '#F5F2E9',
     fontFamily: Fonts.rounded,
     fontSize: 34,
     lineHeight: 40,
@@ -540,13 +540,13 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
   loadingDot: {
-    backgroundColor: '#E46E42',
+    backgroundColor: '#F17855',
     borderRadius: 5,
     height: 8,
     width: 8,
   },
   openingCredit: {
-    color: '#8FA89C',
+    color: '#9AB3A9',
     fontFamily: Fonts.mono,
     fontSize: 12,
     letterSpacing: 1.2,
@@ -581,14 +581,14 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   eyebrow: {
-    color: '#A8D8C6',
+    color: '#A9DCCB',
     fontFamily: Fonts.mono,
     fontSize: 13,
     letterSpacing: 1.8,
     textTransform: 'uppercase',
   },
   title: {
-    color: '#F6EFE5',
+    color: '#F5F2E9',
     fontFamily: Fonts.rounded,
     fontSize: 34,
     lineHeight: 40,
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusPillText: {
-    color: '#F6EFE5',
+    color: '#F5F2E9',
     fontFamily: Fonts.mono,
     fontSize: 12,
     letterSpacing: 1,
@@ -644,7 +644,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   countdown: {
-    color: '#112A24',
+    color: '#102A27',
     fontFamily: Fonts.mono,
     fontSize: 52,
     letterSpacing: -2,
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   metricValue: {
-    color: '#112A24',
+    color: '#102A27',
     fontFamily: Fonts.rounded,
     fontSize: 15,
   },
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: 'center',
-    backgroundColor: '#E46E42',
+    backgroundColor: '#F17855',
     borderRadius: 18,
     flex: 1,
     flexDirection: 'row',
@@ -728,7 +728,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   secondaryButtonText: {
-    color: '#112A24',
+    color: '#102A27',
     fontFamily: Fonts.rounded,
     fontSize: 17,
   },
@@ -746,7 +746,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   ghostButtonText: {
-    color: '#112A24',
+    color: '#102A27',
     fontFamily: Fonts.rounded,
     fontSize: 17,
   },
@@ -772,7 +772,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   sectionTitle: {
-    color: '#112A24',
+    color: '#102A27',
     fontFamily: Fonts.rounded,
     fontSize: 22,
     lineHeight: 28,
@@ -808,7 +808,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   durationInput: {
-    color: '#112A24',
+    color: '#102A27',
     fontFamily: Fonts.rounded,
     fontSize: 34,
     padding: 0,
@@ -886,7 +886,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   testVoiceLabel: {
-    color: '#112A24',
+    color: '#102A27',
     fontFamily: Fonts.rounded,
     fontSize: 16,
   },
@@ -907,7 +907,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   testVoiceButtonText: {
-    color: '#F6EFE5',
+    color: '#F5F2E9',
     fontFamily: Fonts.rounded,
     fontSize: 15,
   },

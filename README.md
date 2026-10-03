@@ -1,6 +1,6 @@
-# reminder-afk
+# Shiftwise
 
-`reminder-afk` is an Expo React Native app for running AFK break timers with:
+`Shiftwise` is a shift and roster planner with a built-in AFK break timer. It includes:
 
 - A default 30 minute timer with custom durations from 5 to 120 minutes
 - Preset buttons for 15, 25, 30, and 45 minutes

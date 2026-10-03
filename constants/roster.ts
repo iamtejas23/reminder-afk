@@ -6,7 +6,7 @@ export const ROSTER_STORAGE_KEY = '@reminder-afk/roster';
 export const ROSTER_NOTIFICATION_PREFIX = 'roster-';
 export const ROSTER_NOTIFICATION_SOURCE = 'reminder-afk-roster';
 
-export const SHIFT_PALETTE = ['#E46E42', '#3B8F78', '#5B7FD6', '#D48734', '#9B6BCC', '#C45C8A'] as const;
+export const SHIFT_PALETTE = ['#F17855', '#3D927B', '#5B7FD6', '#D48734', '#9B6BCC', '#C45C8A'] as const;
 
 export const WEEKDAY_HEADERS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
