@@ -49,6 +49,12 @@ export function WeekdaySelector({
           <Pressable
             key={preset.label}
             accessibilityRole="button"
+            accessibilityState={{
+              selected:
+                selected.length === preset.days.length &&
+                preset.days.every((day) => selected.includes(day)),
+            }}
+            accessibilityLabel={`Repeat ${preset.label}`}
             onPress={() => onChange(preset.days)}
             style={styles.presetChip}>
             <Text style={styles.presetChipText}>{preset.label}</Text>
@@ -63,6 +69,8 @@ export function WeekdaySelector({
             <Pressable
               key={day}
               accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={`${WEEKDAY_HEADERS[day]}${active ? ', selected' : ', not selected'}`}
               onPress={() => onChange(toggleWeekdayInList(selected, day))}
               style={[styles.dayChip, active && { backgroundColor: accentColor }]}>
               <Text style={[styles.dayChipText, active && styles.dayChipTextActive]}>

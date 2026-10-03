@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { AppIcon as Ionicons } from '@/components/ui/app-icon';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Fonts } from '@/constants/theme';
@@ -37,11 +37,15 @@ export function RosterMonthBackupBar({
       return;
     }
 
-    await copyTextToClipboard(getBackupText());
-    Alert.alert(
-      'Month backup copied',
-      `Save this text in Notes, email, or cloud storage. After reinstall, open Restore and paste it back for ${monthLabel}.`
-    );
+    try {
+      await copyTextToClipboard(getBackupText());
+      Alert.alert(
+        'Month backup copied',
+        `Save this text in Notes, email, or cloud storage. After reinstall, open Restore and paste it back for ${monthLabel}.`
+      );
+    } catch {
+      Alert.alert('Could not copy backup', 'Try sharing the backup or copy it again.');
+    }
   }
 
   async function shareMonthBackup() {
@@ -50,7 +54,11 @@ export function RosterMonthBackupBar({
       return;
     }
 
-    await shareRosterBackupText(`Roster ${monthLabel}`, getBackupText());
+    try {
+      await shareRosterBackupText(`Roster ${monthLabel}`, getBackupText());
+    } catch {
+      Alert.alert('Could not share backup', 'Try copying the backup instead.');
+    }
   }
 
   return (

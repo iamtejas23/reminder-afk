@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { AppIcon as Ionicons } from '@/components/ui/app-icon';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
 import {
@@ -21,6 +21,7 @@ import { ShiftTemplatePanel } from '@/components/roster/shift-template-panel';
 import { ScreenBackground } from '@/components/ui/screen-background';
 import { AppColors } from '@/constants/app-ui';
 import { useRoster } from '@/hooks/use-roster';
+import { useHolidays } from '@/hooks/use-holidays';
 import { useTabBarMetrics } from '@/hooks/use-tab-bar-metrics';
 import {
   compareDateKeys,
@@ -40,6 +41,7 @@ import type { RosterShift } from '@/types/roster';
 
 export default function RosterScreen() {
   const roster = useRoster();
+  const holidayStore = useHolidays();
   const { scrollBottomPadding } = useTabBarMetrics();
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -75,6 +77,22 @@ export default function RosterScreen() {
     }
     return map;
   }, [roster.data?.shifts]);
+
+  const holidayNamesByDate = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const holiday of holidayStore.holidays ?? []) {
+      map[holiday.date] = [...(map[holiday.date] ?? []), holiday.name];
+    }
+    return map;
+  }, [holidayStore.holidays]);
+
+  const holidayIconsByDate = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const holiday of holidayStore.holidays ?? []) {
+      map[holiday.date] = [...(map[holiday.date] ?? []), holiday.icon ?? ''];
+    }
+    return map;
+  }, [holidayStore.holidays]);
 
   const monthShifts = useMemo(() => {
     return (roster.data?.shifts ?? [])
@@ -112,15 +130,16 @@ export default function RosterScreen() {
     setSelectedDateKey(formatDateKey(date));
   }
 
-  async function restoreFromBackup(text: string) {
+  async function restoreFromBackup(text: string): Promise<boolean | string> {
     const result = await roster.importRosterBackup(text);
     if (!result.ok) {
       Alert.alert('Restore failed', result.message);
-      return;
+      return result.message;
     }
 
     setRestoreModalVisible(false);
     Alert.alert('Roster restored', result.message);
+    return true;
   }
 
   function selectDate(dateKey: string) {
@@ -176,6 +195,8 @@ export default function RosterScreen() {
             selectedDateKey={selectedDateKey}
             shiftCountByDate={shiftCountByDate}
             primaryEmojiByDate={primaryEmojiByDate}
+            holidayNamesByDate={holidayNamesByDate}
+            holidayIconsByDate={holidayIconsByDate}
             onPrevMonth={goPrevMonth}
             onNextMonth={goNextMonth}
             onSelectDate={selectDate}
@@ -212,6 +233,19 @@ export default function RosterScreen() {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{formatDayHeading(selectedDateKey)}</Text>
+            {(holidayStore.holidays ?? [])
+              .filter((holiday) => holiday.date === selectedDateKey)
+              .map((holiday) => (
+              <View key={holiday.id} style={styles.holidayBanner}>
+                {holiday.icon ? (
+                  <Text style={styles.holidayBannerIcon}>{holiday.icon}</Text>
+                ) : (
+                  <Ionicons name="sunny" size={18} color="#B94E2B" />
+                )}
+                <Text style={styles.holidayBannerText}>{holiday.name}</Text>
+                <Text style={styles.holidayLabel}>HOLIDAY</Text>
+              </View>
+            ))}
             {selectedDayShifts.length === 0 ? (
               <View style={styles.emptyDay}>
                 <Ionicons name="sunny-outline" size={22} color="#8FA89C" />
@@ -266,7 +300,7 @@ export default function RosterScreen() {
         title="Restore roster backup"
         visible={restoreModalVisible}
         onClose={() => setRestoreModalVisible(false)}
-        onImport={(text) => void restoreFromBackup(text)}
+        onImport={restoreFromBackup}
       />
 
       {editingShift ? (
@@ -358,6 +392,31 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     lineHeight: 20,
+  },
+  holidayBanner: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(228, 110, 66, 0.16)',
+    borderColor: 'rgba(228, 110, 66, 0.35)',
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    padding: 12,
+  },
+  holidayBannerText: {
+    color: AppColors.cream,
+    flex: 1,
+    fontFamily: Fonts.rounded,
+    fontSize: 15,
+  },
+  holidayBannerIcon: {
+    fontSize: 18,
+  },
+  holidayLabel: {
+    color: AppColors.accent,
+    fontFamily: Fonts.mono,
+    fontSize: 10,
+    letterSpacing: 0.6,
   },
   section: {
     gap: 12,

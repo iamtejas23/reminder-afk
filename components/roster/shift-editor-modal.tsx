@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { AppIcon as Ionicons } from '@/components/ui/app-icon';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -206,6 +206,8 @@ export function ShiftEditorModal({
                 <Pressable
                   key={color}
                   accessibilityRole="button"
+                  accessibilityLabel={`Set shift color ${color}`}
+                  accessibilityState={{ selected: shift.color === color }}
                   onPress={() => onSave({ color })}
                   style={[
                     styles.paletteSwatch,

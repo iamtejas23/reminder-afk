@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { AppIcon as Ionicons } from '@/components/ui/app-icon';
 import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
@@ -40,6 +40,15 @@ export default function TabLayout() {
               size={24}
               color={color}
             />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="holidays"
+        options={{
+          title: 'Holidays',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'sunny' : 'sunny-outline'} size={24} color={color} />
           ),
         }}
       />

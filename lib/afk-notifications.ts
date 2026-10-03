@@ -178,6 +178,21 @@ export async function requestAfkNotificationPermissionsAsync(): Promise<Notifica
   return requestedPermissions.granted ? 'granted' : 'denied';
 }
 
+/** Read permission without opening a system prompt; use at startup and foreground refresh. */
+export async function getAfkNotificationPermissionStateAsync(): Promise<NotificationPermissionState> {
+  if (Platform.OS === 'web' || !supportsNativeExpoNotifications()) {
+    return 'unsupported';
+  }
+
+  const Notifications = getExpoNotificationsModule();
+  if (!Notifications) {
+    return 'unsupported';
+  }
+
+  const permissions = await Notifications.getPermissionsAsync();
+  return permissions.granted ? 'granted' : 'denied';
+}
+
 export async function scheduleReminderNotifications({
   durationMinutes,
   elapsedMs,

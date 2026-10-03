@@ -7,6 +7,7 @@
 - Start, pause, reset, large countdown, progress bar, and live status copy
 - Smart reminders at about 82.5%, 95%, and 100%
 - Local notifications for background-safe reminders
+- 9:00 AM notifications on rostered days with no enabled shift
 - Expo Speech voice prompts with a slightly slower, lower-pitch robotic feel
 - AsyncStorage persistence for the last duration, reminder settings, and completed session count
 
@@ -42,7 +43,7 @@ If these are **not** set, **Release APK** still runs and publishes an APK signed
 2. Choose `patch`, `minor`, or `major` (default: `patch`).
 3. The workflow bumps `package.json` / `app.json`, increments `android.versionCode`, builds a **single-arch arm64** release APK (CI skips R8 minify for speed/reliability; local `android:release:ci` still uses minify from `app.json`), then uploads the APK and SHA256 checksum to a new GitHub Release tagged `vX.Y.Z`.
 
-Local release build (after creating `android/` via prebuild and setting signing env vars):
+Local release build (the script generates `android/` and configures signing):
 
 ```bash
 export ANDROID_KEYSTORE_BASE64=...
@@ -74,7 +75,7 @@ Useful shortcuts:
 ## Notes
 
 - The app uses `expo-notifications` local notifications, so background reminders do not require a server.
-- Expo documents that local notifications remain available in Expo Go, while Android push notifications require a development build.
+- Android Expo Go does not load `expo-notifications` on SDK 53 and newer. Use a development build or release APK for Android background notifications.
 - On iOS, Expo Speech will not produce audio if the device is in silent mode.
 - The speech messages are exactly:
   - `Hey, your break is almost over`
@@ -86,7 +87,10 @@ Useful shortcuts:
 ```text
 app/
   _layout.tsx
-  index.tsx
+  (tabs)/
+    index.tsx
+    roster.tsx
+    settings.tsx
 components/afk/
   preset-button.tsx
   progress-bar.tsx

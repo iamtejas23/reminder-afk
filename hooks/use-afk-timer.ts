@@ -15,6 +15,7 @@ import {
   addReminderNotificationReceivedListener,
   cancelReminderNotifications,
   dismissScheduledNotificationAsync,
+  getAfkNotificationPermissionStateAsync,
   getReminderNotificationData,
   requestAfkNotificationPermissionsAsync,
   scheduleReminderNotifications,
@@ -263,7 +264,7 @@ export function useAfkTimer() {
       const [preferences, savedSession, permissionState] = await Promise.all([
         loadAfkPreferences(),
         loadAfkSession(),
-        Platform.OS !== 'web' ? requestAfkNotificationPermissionsAsync() : Promise.resolve('unsupported' as const),
+        getAfkNotificationPermissionStateAsync().catch(() => 'unknown' as const),
       ]);
       if (!isMounted) {
         return;
@@ -458,7 +459,7 @@ export function useAfkTimer() {
       // Re-check permission every time app comes to foreground — user may have
       // just enabled notifications in system Settings while the app was in background.
       if (Platform.OS !== 'web') {
-        void requestAfkNotificationPermissionsAsync().then((freshPermission) => {
+        void getAfkNotificationPermissionStateAsync().then((freshPermission) => {
           setState((s) => {
             if (s.permissionState === freshPermission) return s;
             return {
@@ -467,7 +468,7 @@ export function useAfkTimer() {
               errorMessage: freshPermission === 'granted' ? null : s.errorMessage,
             };
           });
-        });
+        }).catch(() => undefined);
       }
 
       if (

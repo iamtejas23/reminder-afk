@@ -6,12 +6,15 @@ import {
 } from '@/constants/roster';
 import { shiftDateTimeMs } from '@/lib/roster-dates';
 import { eachShiftOccurrenceDateKeys } from '@/lib/roster-weekdays';
+import { eachDateKeyInRange } from '@/lib/roster-shift-dates';
 import { resolveShiftEmoji } from '@/lib/shift-style';
 import { getExpoNotificationsModule, supportsNativeExpoNotifications } from '@/lib/expo-notifications-client';
 import { requestAfkNotificationPermissionsAsync } from '@/lib/afk-notifications';
 import type { RosterShift } from '@/types/roster';
 
 const ROSTER_CHANNEL_ID = 'roster-shift-reminders';
+const WEEK_OFF_TITLE = 'No clocking in today 😌';
+const WEEK_OFF_BODY = 'It’s your day off. Take it slow and enjoy your day!';
 
 async function ensureRosterChannelAsync() {
   const Notifications = getExpoNotificationsModule();
@@ -21,7 +24,7 @@ async function ensureRosterChannelAsync() {
 
   await Notifications.setNotificationChannelAsync(ROSTER_CHANNEL_ID, {
     name: 'Shift roster',
-    description: 'Reminders before your scheduled shifts start',
+    description: 'Shift-start and rostered day-off reminders',
     importance: Notifications.AndroidImportance.HIGH,
     enableVibrate: true,
     vibrationPattern: [0, 220, 120, 220],
@@ -73,6 +76,10 @@ export async function syncRosterNotificationsAsync(
   await ensureRosterChannelAsync();
 
   const now = Date.now();
+  const activeShifts = shifts.filter((shift) => shift.enabled);
+  const workingDates = new Set(
+    activeShifts.flatMap((shift) => eachShiftOccurrenceDateKeys(shift))
+  );
 
   for (const shift of shifts) {
     if (!shift.enabled || !shift.notifyAtStart) {
@@ -113,6 +120,41 @@ export async function syncRosterNotificationsAsync(
           date: new Date(triggerMs),
         },
       });
+    }
+  }
+
+  // Week-off reminders are based on dates covered by the roster. A day only
+  // counts as a week off when no enabled shift is scheduled for that date.
+  if (activeShifts.length > 0) {
+    const firstDate = activeShifts.map((shift) => shift.date).sort()[0];
+    const endDates = activeShifts.map((shift) => shift.endDate).sort();
+    const lastDate = endDates[endDates.length - 1];
+    if (firstDate && lastDate) {
+      for (const dateKey of eachDateKeyInRange(firstDate, lastDate)) {
+        if (workingDates.has(dateKey)) {
+          continue;
+        }
+
+        const triggerMs = shiftDateTimeMs(dateKey, '09:00');
+        if (triggerMs === null || triggerMs <= now) {
+          continue;
+        }
+
+        await Notifications.scheduleNotificationAsync({
+          identifier: `${ROSTER_NOTIFICATION_PREFIX}week-off-${dateKey}`,
+          content: {
+            title: WEEK_OFF_TITLE,
+            body: WEEK_OFF_BODY,
+            priority: Notifications.AndroidNotificationPriority.DEFAULT,
+            data: { source: ROSTER_NOTIFICATION_SOURCE, type: 'week-off', date: dateKey },
+            ...(Platform.OS === 'android' ? { channelId: ROSTER_CHANNEL_ID } : {}),
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: new Date(triggerMs),
+          },
+        });
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { AppIcon as Ionicons } from '@/components/ui/app-icon';
 import { useState } from 'react';
 import {
   Modal,
@@ -16,7 +16,7 @@ import { Fonts } from '@/constants/theme';
 type RosterBackupModalProps = {
   hint?: string;
   onClose: () => void;
-  onImport: (text: string) => void;
+  onImport: (text: string) => boolean | string | Promise<boolean | string>;
   title: string;
   visible: boolean;
 };
@@ -38,14 +38,28 @@ export function RosterBackupModal({
   }
 
   async function pasteFromClipboard() {
-    const text = await readClipboardText();
-    if (!text.trim()) {
-      setPasteHint('Clipboard is empty. Copy a roster backup first.');
-      return;
-    }
+    try {
+      const text = await readClipboardText();
+      if (!text.trim()) {
+        setPasteHint('Clipboard is empty. Copy a roster backup first.');
+        return;
+      }
 
-    setDraft(text);
-    setPasteHint('Pasted from clipboard.');
+      setDraft(text);
+      setPasteHint('Pasted from clipboard.');
+    } catch {
+      setPasteHint('Could not read the clipboard. Paste the backup into the text box.');
+    }
+  }
+
+  async function importBackup() {
+    const result = await onImport(draft);
+    if (result === true) {
+      setDraft('');
+      setPasteHint(null);
+    } else if (typeof result === 'string') {
+      setPasteHint(result);
+    }
   }
 
   return (
@@ -86,9 +100,7 @@ export function RosterBackupModal({
               accessibilityRole="button"
               disabled={!draft.trim()}
               onPress={() => {
-                onImport(draft);
-                setDraft('');
-                setPasteHint(null);
+                void importBackup();
               }}
               style={[styles.primary, !draft.trim() && styles.primaryDisabled]}>
               <Ionicons name="download-outline" size={18} color="#F6EFE5" />

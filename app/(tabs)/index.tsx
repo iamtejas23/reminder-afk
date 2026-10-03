@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { AppIcon as Ionicons } from '@/components/ui/app-icon';
 import { Image } from 'expo-image';
 import { useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -13,11 +13,14 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import Animated, {
+  cancelAnimation,
   Easing,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withRepeat,
   withSequence,
   withTiming,
@@ -29,6 +32,42 @@ import { DURATION_STEP_MINUTES, PRESET_DURATIONS } from '@/constants/afk';
 import { Fonts } from '@/constants/theme';
 import { useAfkTimer } from '@/hooks/use-afk-timer';
 import { TAB_BAR_HIDDEN_STYLE, useTabBarMetrics } from '@/hooks/use-tab-bar-metrics';
+
+function LoadingDot({ delay }: { delay: number }) {
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 360, easing: Easing.out(Easing.cubic) }),
+          withTiming(0, { duration: 420, easing: Easing.inOut(Easing.cubic) })
+        ),
+        -1
+      )
+    );
+
+    return () => cancelAnimation(progress);
+  }, [delay, progress]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: 0.4 + progress.value * 0.6,
+    transform: [{ translateY: -5 * progress.value }, { scale: 0.86 + progress.value * 0.14 }],
+  }));
+
+  return <Animated.View style={[styles.loadingDot, animatedStyle]} />;
+}
+
+function SplashLoadingDots() {
+  return (
+    <View accessibilityLabel="Loading" accessibilityRole="progressbar" style={styles.loadingDots}>
+      <LoadingDot delay={0} />
+      <LoadingDot delay={150} />
+      <LoadingDot delay={300} />
+    </View>
+  );
+}
 
 // ─── Circular progress ring (two-halves clip technique) ───────────────────────
 function CircularRing({
@@ -133,7 +172,7 @@ function PulseRing({ active, size }: { active: boolean; size: number }) {
       scale.value = withTiming(1, { duration: 300 });
       opacity.value = withTiming(0, { duration: 300 });
     }
-  }, [active]);
+  }, [active, opacity, scale]);
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -142,7 +181,6 @@ function PulseRing({ active, size }: { active: boolean; size: number }) {
 
   return (
     <Animated.View
-      pointerEvents="none"
       style={[
         animStyle,
         {
@@ -151,6 +189,7 @@ function PulseRing({ active, size }: { active: boolean; size: number }) {
           height: size + 24,
           borderRadius: (size + 24) / 2,
           backgroundColor: '#E46E42',
+          pointerEvents: 'none',
         },
       ]}
     />
@@ -178,6 +217,7 @@ const openingLogo = require('../../assets/images/splash-icon.png');
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const timer = useAfkTimer();
+  const { width: windowWidth } = useWindowDimensions();
   const navigation = useNavigation();
   const { resolvedTabBarStyle, scrollBottomPadding } = useTabBarMetrics();
   const [draftDuration, setDraftDuration] = useState(() => String(timer.durationMinutes));
@@ -215,6 +255,7 @@ export default function HomeScreen() {
             <Text style={styles.openingSubtitle}>
               {timer.isReady ? 'Loading your AFK desk companion...' : 'Preparing your AFK timer...'}
             </Text>
+            <SplashLoadingDots />
           </View>
           <Text style={styles.openingCredit}>built by Tejas Mane</Text>
         </View>
@@ -222,7 +263,7 @@ export default function HomeScreen() {
     );
   }
 
-  const ringSize = 220;
+  const ringSize = Math.min(220, Math.max(136, windowWidth - 96));
   const isRunning = timer.status === 'running';
   const ringFill = RING_FILL[timer.status];
 
@@ -288,7 +329,7 @@ export default function HomeScreen() {
                 fillColor={ringFill}
               />
               {/* Center content */}
-              <View style={styles.ringCenter} pointerEvents="none">
+              <View style={[styles.ringCenter, { pointerEvents: 'none' }]}>
                 <Text style={styles.countdown}>{timer.countdownLabel}</Text>
                 <Text style={styles.progressPct}>{timer.progressPercent}%</Text>
               </View>
@@ -490,6 +531,20 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: 'center',
   },
+  loadingDots: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 9,
+    height: 24,
+    justifyContent: 'center',
+    marginTop: 18,
+  },
+  loadingDot: {
+    backgroundColor: '#E46E42',
+    borderRadius: 5,
+    height: 8,
+    width: 8,
+  },
   openingCredit: {
     color: '#8FA89C',
     fontFamily: Fonts.mono,
@@ -545,10 +600,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     gap: 18,
     padding: 22,
-    shadowColor: '#04120F',
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 12 },
+    boxShadow: '0px 12px 20px rgba(4, 18, 15, 0.3)',
     elevation: 8,
     alignItems: 'center',
   },

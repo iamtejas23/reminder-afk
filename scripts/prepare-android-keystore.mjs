@@ -14,6 +14,12 @@ const required = [
   'ANDROID_KEY_PASSWORD',
 ];
 
+const configured = required.filter((key) => process.env[key]?.trim());
+if (configured.length === 0) {
+  console.log('No release keystore credentials configured; the build will use the debug keystore.');
+  process.exit(0);
+}
+
 for (const key of required) {
   if (!process.env[key]?.trim()) {
     console.error(`Missing required environment variable: ${key}`);

@@ -22,6 +22,8 @@ export function SettingSwitch({
         <Text style={styles.description}>{description}</Text>
       </View>
       <Switch
+        accessibilityLabel={label}
+        accessibilityHint={description}
         trackColor={{ false: '#D0BFAB', true: '#76B7A2' }}
         thumbColor={value ? '#16362E' : '#F7F0E6'}
         ios_backgroundColor="#D0BFAB"

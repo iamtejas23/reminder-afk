@@ -1,9 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
+import { AppIcon as Ionicons } from '@/components/ui/app-icon';
 import Constants from 'expo-constants';
 import { useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingSwitch } from '@/components/afk/setting-switch';
@@ -46,13 +46,17 @@ export default function SettingsScreen() {
     key: 'voiceEnabled' | 'vibrationEnabled',
     value: boolean
   ) {
-    const prefs = await loadAfkPreferences();
-    const next = { ...prefs, [key]: value };
-    await saveAfkPreferences(next);
-    if (key === 'voiceEnabled') {
-      setVoiceEnabled(value);
-    } else {
-      setVibrationEnabled(value);
+    try {
+      const prefs = await loadAfkPreferences();
+      const next = { ...prefs, [key]: value };
+      await saveAfkPreferences(next);
+      if (key === 'voiceEnabled') {
+        setVoiceEnabled(value);
+      } else {
+        setVibrationEnabled(value);
+      }
+    } catch {
+      Alert.alert('Could not save setting', 'Please try again.');
     }
   }
 
@@ -67,11 +71,15 @@ export default function SettingsScreen() {
       return;
     }
 
-    await copyTextToClipboard(buildFullBackupText(roster.data));
-    Alert.alert(
-      'Full roster copied',
-      'Save this text somewhere safe (Notes, email, Google Drive). After reinstall, use Restore roster below and paste it back.'
-    );
+    try {
+      await copyTextToClipboard(buildFullBackupText(roster.data));
+      Alert.alert(
+        'Full roster copied',
+        'Save this text somewhere safe (Notes, email, Google Drive). After reinstall, use Restore roster below and paste it back.'
+      );
+    } catch {
+      Alert.alert('Could not copy backup', 'Try sharing the backup or copy it again.');
+    }
   }
 
   async function shareFullRosterBackup() {
@@ -80,29 +88,58 @@ export default function SettingsScreen() {
       return;
     }
 
-    await shareRosterBackupText('reminder-afk roster', buildFullBackupText(roster.data));
+    try {
+      await shareRosterBackupText('reminder-afk roster', buildFullBackupText(roster.data));
+    } catch {
+      Alert.alert('Could not share backup', 'Try copying the backup instead.');
+    }
   }
 
-  async function restoreFromBackup(text: string) {
+  async function restoreFromBackup(text: string): Promise<boolean | string> {
     const result = await roster.importRosterBackup(text);
     if (!result.ok) {
       Alert.alert('Restore failed', result.message);
-      return;
+      return result.message;
     }
 
     setRestoreModalVisible(false);
     Alert.alert('Roster restored', result.message);
+    return true;
   }
 
   async function requestNotifications() {
-    const state = await requestAfkNotificationPermissionsAsync();
-    if (state === 'granted') {
-      setPermissionHint('Notifications are enabled for AFK and roster reminders.');
-      void roster.resyncNotifications();
-    } else if (state === 'unsupported') {
-      setPermissionHint('Use a development build or release APK for notification access on this device.');
-    } else {
-      setPermissionHint('Permission denied. Open system settings to enable notifications.');
+    try {
+      const state = await requestAfkNotificationPermissionsAsync();
+      if (state === 'granted') {
+        setPermissionHint('Notifications are enabled for AFK and roster reminders.');
+        void roster.resyncNotifications();
+      } else if (state === 'unsupported') {
+        setPermissionHint(
+          Platform.OS === 'web'
+            ? 'Notifications are not available on web. Use the mobile app for reminders.'
+            : 'Use a development build or release APK for notification access on this device.'
+        );
+      } else {
+        setPermissionHint('Permission denied. Open system settings to enable notifications.');
+      }
+    } catch {
+      setPermissionHint('Could not check notification access. Try again or open device settings.');
+    }
+  }
+
+  async function openDeviceSettings() {
+    try {
+      await Linking.openSettings();
+    } catch {
+      setPermissionHint('Could not open device settings. Open notification settings manually.');
+    }
+  }
+
+  async function testVoicePrompt() {
+    try {
+      await speakReminder(REMINDER_STAGES[0].message);
+    } catch {
+      Alert.alert('Voice prompt unavailable', 'Check that speech is available on this device.');
     }
   }
 
@@ -138,7 +175,7 @@ export default function SettingsScreen() {
             />
             <Pressable
               accessibilityRole="button"
-              onPress={() => void speakReminder(REMINDER_STAGES[0].message)}
+              onPress={() => void testVoicePrompt()}
               style={styles.secondaryAction}>
               <Ionicons name="volume-high-outline" size={18} color="#112A24" />
               <Text style={styles.secondaryActionText}>Test voice prompt</Text>
@@ -181,7 +218,7 @@ export default function SettingsScreen() {
               <Ionicons name="notifications-outline" size={18} color="#112A24" />
               <Text style={styles.secondaryActionText}>Request notification permission</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" onPress={() => Linking.openSettings()} style={styles.secondaryAction}>
+            <Pressable accessibilityRole="button" onPress={() => void openDeviceSettings()} style={styles.secondaryAction}>
               <Ionicons name="settings-outline" size={18} color="#112A24" />
               <Text style={styles.secondaryActionText}>Open device settings</Text>
             </Pressable>
@@ -204,7 +241,7 @@ export default function SettingsScreen() {
         title="Restore roster backup"
         visible={restoreModalVisible}
         onClose={() => setRestoreModalVisible(false)}
-        onImport={(text) => void restoreFromBackup(text)}
+        onImport={restoreFromBackup}
       />
     </SafeAreaView>
   );

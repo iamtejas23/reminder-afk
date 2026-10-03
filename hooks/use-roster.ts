@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 
 import type { ShiftTemplateId } from '@/constants/shift-templates';
 import {
@@ -13,22 +14,28 @@ import type { Weekday } from '@/types/roster';
 import { syncRosterNotificationsAsync } from '@/lib/roster-notifications';
 import type { RosterData, RosterShift } from '@/types/roster';
 
-type SyncStatus = 'idle' | 'syncing' | 'unsupported' | 'denied' | 'ready';
+type SyncStatus = 'idle' | 'syncing' | 'unsupported' | 'denied' | 'ready' | 'error';
+type SyncResult = 'scheduled' | 'unsupported' | 'denied' | 'failed';
 
 export function useRoster() {
   const [data, setData] = useState<RosterData | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
-  const applySyncResult = useCallback((result: 'scheduled' | 'unsupported' | 'denied') => {
+  const applySyncResult = useCallback((result: SyncResult) => {
     if (result === 'unsupported') {
       setSyncStatus('unsupported');
       setSyncMessage(
-        'Shift reminders need a dev build or release APK on Android Expo Go. Your roster is still saved locally.'
+        Platform.OS === 'web'
+          ? 'Roster notifications are not available on web. Your roster is still saved locally.'
+          : 'Shift reminders need a dev build or release APK on Android Expo Go. Your roster is still saved locally.'
       );
     } else if (result === 'denied') {
       setSyncStatus('denied');
       setSyncMessage('Turn on notifications in system settings to receive shift reminders.');
+    } else if (result === 'failed') {
+      setSyncStatus('error');
+      setSyncMessage('Roster saved, but reminders could not be updated. Tap here to retry.');
     } else {
       setSyncStatus('ready');
       setSyncMessage(null);
@@ -38,9 +45,21 @@ export function useRoster() {
   const persist = useCallback(
     async (next: RosterData) => {
       setData(next);
-      await saveRosterData(next);
       setSyncStatus('syncing');
-      const result = await syncRosterNotificationsAsync(next.shifts, next.remindersEnabled);
+      try {
+        await saveRosterData(next);
+      } catch {
+        setSyncStatus('error');
+        setSyncMessage('Could not save the roster on this device. Tap here to retry.');
+        return;
+      }
+
+      let result: SyncResult;
+      try {
+        result = await syncRosterNotificationsAsync(next.shifts, next.remindersEnabled);
+      } catch {
+        result = 'failed';
+      }
       applySyncResult(result);
     },
     [applySyncResult]
@@ -57,7 +76,12 @@ export function useRoster() {
 
       setData(loaded);
       setSyncStatus('syncing');
-      const result = await syncRosterNotificationsAsync(loaded.shifts, loaded.remindersEnabled);
+      let result: SyncResult;
+      try {
+        result = await syncRosterNotificationsAsync(loaded.shifts, loaded.remindersEnabled);
+      } catch {
+        result = 'failed';
+      }
       if (!active) {
         return;
       }

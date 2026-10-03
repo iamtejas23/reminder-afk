@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { AppIcon as Ionicons } from '@/components/ui/app-icon';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { WEEKDAY_HEADERS } from '@/constants/roster';
@@ -6,12 +6,15 @@ import { AppColors } from '@/constants/app-ui';
 import {
   buildMonthGrid,
   formatDateKey,
+  formatDayHeading,
   formatMonthYear,
 } from '@/lib/roster-dates';
 import { Fonts } from '@/constants/theme';
 
 type MonthCalendarProps = {
   month: number;
+  holidayIconsByDate?: Record<string, string[]>;
+  holidayNamesByDate?: Record<string, string[]>;
   onNextMonth: () => void;
   onPrevMonth: () => void;
   onSelectDate: (dateKey: string) => void;
@@ -24,6 +27,8 @@ type MonthCalendarProps = {
 
 export function MonthCalendar({
   month,
+  holidayIconsByDate = {},
+  holidayNamesByDate = {},
   onNextMonth,
   onPrevMonth,
   onSelectDate,
@@ -39,11 +44,19 @@ export function MonthCalendar({
   return (
     <View style={styles.card}>
       <View style={styles.monthHeader}>
-        <Pressable accessibilityRole="button" onPress={onPrevMonth} style={styles.monthNav}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Previous month"
+          onPress={onPrevMonth}
+          style={styles.monthNav}>
           <Ionicons name="chevron-back" size={20} color="#112A24" />
         </Pressable>
         <Text style={styles.monthTitle}>{formatMonthYear(year, month)}</Text>
-        <Pressable accessibilityRole="button" onPress={onNextMonth} style={styles.monthNav}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Next month"
+          onPress={onNextMonth}
+          style={styles.monthNav}>
           <Ionicons name="chevron-forward" size={20} color="#112A24" />
         </Pressable>
       </View>
@@ -62,11 +75,17 @@ export function MonthCalendar({
           const isToday = cell.dateKey === todayKey;
           const shiftCount = shiftCountByDate[cell.dateKey] ?? 0;
           const emoji = primaryEmojiByDate[cell.dateKey];
+          const holidayNames = holidayNamesByDate[cell.dateKey] ?? [];
+          const holidayIcons = holidayIconsByDate[cell.dateKey] ?? [];
 
           return (
             <Pressable
               key={`${cell.dateKey}-${index}`}
               accessibilityRole="button"
+              accessibilityLabel={`${formatDayHeading(cell.dateKey)}${
+                shiftCount > 0 ? `, ${shiftCount} shift${shiftCount === 1 ? '' : 's'}` : ', no shifts'
+              }${holidayNames.length ? `, holiday: ${holidayNames.join(', ')}` : ''}`}
+              accessibilityState={{ selected: isSelected }}
               onPress={() => onSelectDate(cell.dateKey)}
               style={[
                 styles.dayCell,
@@ -82,15 +101,24 @@ export function MonthCalendar({
                 ]}>
                 {cell.day}
               </Text>
-              {showShiftMarkers && shiftCount > 0 ? (
+              {(showShiftMarkers && shiftCount > 0) || holidayNames.length > 0 ? (
                 <View style={styles.markerRow}>
-                  <Text style={[styles.dayEmoji, isSelected && styles.dayEmojiSelected]}>
-                    {emoji ?? '•'}
-                  </Text>
-                  {shiftCount > 1 ? (
+                  {showShiftMarkers && shiftCount > 0 ? (
+                    <Text style={[styles.dayEmoji, isSelected && styles.dayEmojiSelected]}>
+                      {emoji ?? '•'}
+                    </Text>
+                  ) : null}
+                  {showShiftMarkers && shiftCount > 1 ? (
                     <Text style={[styles.moreCount, isSelected && styles.dayEmojiSelected]}>
                       +{shiftCount - 1}
                     </Text>
+                  ) : null}
+                  {holidayNames.length > 0 ? (
+                    holidayIcons[0] ? (
+                      <Text style={styles.holidayEmoji}>{holidayIcons[0]}</Text>
+                    ) : (
+                      <View style={styles.holidayDot} />
+                    )
                   ) : null}
                 </View>
               ) : (
@@ -194,6 +222,16 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 9,
     fontWeight: '700',
+  },
+  holidayDot: {
+    backgroundColor: '#E46E42',
+    borderRadius: 3,
+    height: 5,
+    width: 5,
+  },
+  holidayEmoji: {
+    fontSize: 11,
+    lineHeight: 14,
   },
   dotSpacer: {
     height: 14,

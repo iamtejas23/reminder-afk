@@ -10,8 +10,8 @@ type ScreenBackgroundProps = {
 export function ScreenBackground({ children, style }: ScreenBackgroundProps) {
   return (
     <View style={[styles.root, style]}>
-      <View style={styles.orbLarge} pointerEvents="none" />
-      <View style={styles.orbSmall} pointerEvents="none" />
+      <View style={[styles.orbLarge, { pointerEvents: 'none' }]} />
+      <View style={[styles.orbSmall, { pointerEvents: 'none' }]} />
       {children}
     </View>
   );
