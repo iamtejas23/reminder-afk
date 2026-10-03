@@ -2,7 +2,7 @@
   "expo": {
     "name": "reminder-afk",
     "slug": "reminder-afk",
-    "version": "1.0.1",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "reminderafk",
@@ -11,7 +11,7 @@
       "supportsTablet": true
     },
     "android": {
-      "versionCode": 8,
+      "versionCode": 9,
       "adaptiveIcon": {
         "backgroundColor": "#102A27",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
