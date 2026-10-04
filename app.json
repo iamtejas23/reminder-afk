@@ -2,13 +2,16 @@
   "expo": {
     "name": "reminder-afk",
     "slug": "reminder-afk",
-    "version": "2.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "reminderafk",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "CFBundleDisplayName": "Shiftwise"
+      }
     },
     "android": {
       "versionCode": 9,
