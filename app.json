@@ -2,7 +2,7 @@
   "expo": {
     "name": "Shiftwise",
     "slug": "reminder-afk",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "reminderafk",
@@ -14,7 +14,7 @@
       }
     },
     "android": {
-      "versionCode": 10,
+      "versionCode": 11,
       "adaptiveIcon": {
         "backgroundColor": "#102A27",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
