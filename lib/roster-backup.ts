@@ -170,7 +170,7 @@ export function importRosterBackupText(
   if (!backup) {
     return {
       ok: false,
-      message: 'Could not read backup. Paste the full copied block starting with REMINDER-AFK-ROSTER.',
+      message: 'Could not read backup. Paste the full copied roster backup text.',
     };
   }
 

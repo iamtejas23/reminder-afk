@@ -81,7 +81,7 @@ export function RosterBackupModal({
 
           <TextInput
             multiline
-            placeholder="REMINDER-AFK-ROSTER:v1 followed by JSON..."
+            placeholder="Paste the full roster backup text here..."
             placeholderTextColor="#9AA8A1"
             style={styles.input}
             textAlignVertical="top"
